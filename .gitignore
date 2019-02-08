@@ -1,3 +1,12 @@
+.DS_Store
+
+#Emacs
+*~
+\#*\#
+.\#*
+
+
+#OCaml
 *.annot
 *.cmo
 *.cma
