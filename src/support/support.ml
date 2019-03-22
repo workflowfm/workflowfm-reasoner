@@ -51,12 +51,3 @@ let find_path_ign =
   fun ign p tm -> implode(find_path_ign ign p tm);;
 
 
-(* Multisets *)
-
-needs "tools/Library/multisets.ml";;
-
-let munion_match avoids wmunion tmunion =
-  let wm = flat_munion wmunion and
-      tm = flat_munion tmunion in
-    term_match_list avoids wm tm;;
-
