@@ -12,7 +12,7 @@
 
 needs "IsabelleLight/make.ml";;
 needs "tools/make.ml";;
-needs "tools/embed.ml";;
+needs "embed/sequent.ml";;
 needs "tools/Library/lists.ml";;
 needs "tools/Library/sets.ml";;
 needs "tools/Library/multisets.ml";;
@@ -290,13 +290,13 @@ end;;
 
 (* ------------------------------------------------------------------------- *)
 (* TODO: Can we factor these in the module? *)
-
+(*
 let split_cllprocseq tm =
   let comb,args = strip_comb tm in
   (fst o dest_const) comb,[hd args],[(hd o tl) args];;
   
 add_split_seq_fun "|--" split_cllprocseq;;
-
+*)
 
 
 (* ========================================================================= *)

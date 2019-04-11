@@ -9,7 +9,7 @@
 
 (* Dependencies *)
 
-needs ("tools/embed.ml");;
+needs ("embed/sequent.ml");;
 needs (!serv_dir ^ "support/support.ml");;
 needs (!serv_dir ^ "processes/provenance.ml");;
 
