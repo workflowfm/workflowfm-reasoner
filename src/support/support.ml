@@ -4,15 +4,12 @@
 (*                           Petros Papapanagiotou                           *)
 (*              Center of Intelligent Systems and their Applications         *)
 (*                           University of Edinburgh                         *)
-(*                                 2010-2015                                 *)
+(*                                 2010-2019                                 *)
 (* ========================================================================= *)
 
 needs "IsabelleLight/make.ml";;
+needs "tools/lib.ml";; (* doesn't really "need" it, but we move some stuff from here to there *) 
 needs "tools/terms.ml";;
-
-
-let addmap a b mp =
-  (a,b) :: (filter (fun x -> not(fst x = a)) mp);;
 
 let string_matches_term key tm =
   try (

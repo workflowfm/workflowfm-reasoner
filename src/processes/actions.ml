@@ -78,7 +78,7 @@ module Actionstate = struct
     ({ s with joined = tm :: s.joined }:t)
 
   let add_prov n p s =
-    ({ s with prov = addmap n p s.prov }:t)
+    ({ s with prov = assoc_add n p s.prov }:t)
 
   let set_prov pm s =
     ({ s with prov = pm }:t)

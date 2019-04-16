@@ -717,7 +717,7 @@ module Clltactics =
 		      (* Special case: Mark as connected even though it is buffered! *)
 		    (Actionstate.ADD_IPROV_TAC rh (prov_of_tm ("&" ^ joinlbl) rh)); 
 		    (Actionstate.PLUS_IPROV_TAC lh rh)]
-		    (Actionstate.set_prov (addmap lbl (prov_of_tm ("&" ^ joinlbl) out) st.Actionstate.prov) st) gl
+		    (Actionstate.set_prov (assoc_add lbl (prov_of_tm ("&" ^ joinlbl) out) st.Actionstate.prov) st) gl
 		  
 	      and lcase_rheq_tac st gl =
 		if (is_binop `LinPlus` out) then
@@ -734,7 +734,7 @@ module Clltactics =
 		      (* Special case: Mark as connected even though it is buffered! *)
 		    (Actionstate.ADD_IPROV_TAC rh (prov_of_tm ("&" ^ joinlbl) rh));
 		    (Actionstate.PLUS_IPROV_TAC lh rh)]
-		    (Actionstate.set_prov (addmap lbl (prov_of_tm ("&" ^ joinlbl) out) st.Actionstate.prov) st) gl
+		    (Actionstate.set_prov (assoc_add lbl (prov_of_tm ("&" ^ joinlbl) out) st.Actionstate.prov) st) gl
 		else FAIL_ETAC "" st gl 
 		  
 	      and lcase_lheq_tac st gl =
@@ -750,7 +750,7 @@ module Clltactics =
 		      (* Special case: Mark as connected even though it is buffered! *)
 		    (Actionstate.ADD_IPROV_TAC rh (prov_of_tm ("&" ^ joinlbl) rh));
 		    (Actionstate.PLUS_IPROV_TAC lh rh)]
-		    (Actionstate.set_prov (addmap lbl (prov_of_tm ("&" ^ joinlbl) out) st.Actionstate.prov) st) gl
+		    (Actionstate.set_prov (assoc_add lbl (prov_of_tm ("&" ^ joinlbl) out) st.Actionstate.prov) st) gl
 		else FAIL_ETAC "" st gl
 		  
 	      and lelse_tac st gl =
@@ -781,7 +781,7 @@ module Clltactics =
 		      (* Special case: Mark as connected even though it is buffered! *)
 		    (Actionstate.ADD_IPROV_TAC lh (prov_of_tm ("&" ^ joinlbl) lh));
 		    (Actionstate.PLUS_IPROV_TAC lh rh)]
-		    (Actionstate.set_prov (addmap lbl (prov_of_tm ("&" ^ joinlbl) out) st.Actionstate.prov) st) gl
+		    (Actionstate.set_prov (assoc_add lbl (prov_of_tm ("&" ^ joinlbl) out) st.Actionstate.prov) st) gl
 		  
 	      and rcase_rheq_tac st gl =
 		if (is_binop `LinPlus` out) then
@@ -796,7 +796,7 @@ module Clltactics =
 		      (* Special case: Mark as connected even though it is buffered! *)
 		    (Actionstate.ADD_IPROV_TAC lh (prov_of_tm ("&" ^ joinlbl) lh));
 		    (Actionstate.PLUS_IPROV_TAC lh rh)]
-		    (Actionstate.set_prov (addmap lbl (prov_of_tm ("&" ^ joinlbl) out) st.Actionstate.prov) st) gl
+		    (Actionstate.set_prov (assoc_add lbl (prov_of_tm ("&" ^ joinlbl) out) st.Actionstate.prov) st) gl
 		else FAIL_ETAC "" st gl 
 		  
 	      and rcase_lheq_tac st gl =
@@ -814,7 +814,7 @@ module Clltactics =
 		      (* Special case: Mark as connected even though it is buffered! *)
 		    (Actionstate.ADD_IPROV_TAC lh (prov_of_tm ("&" ^ joinlbl) lh));
 		    (Actionstate.PLUS_IPROV_TAC lh rh)]
-                    (Actionstate.set_prov (addmap lbl (prov_of_tm ("&" ^ joinlbl) out) st.Actionstate.prov) st) gl
+                    (Actionstate.set_prov (assoc_add lbl (prov_of_tm ("&" ^ joinlbl) out) st.Actionstate.prov) st) gl
 		else FAIL_ETAC "" st gl
 		  
 	      and relse_tac st gl =
