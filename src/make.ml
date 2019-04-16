@@ -3,7 +3,7 @@
 (*                                                                           *)
 (*                   Petros Papapanagiotou, Jacques Fleuriot                 *)
 (*                          University of Edinburgh                          *)
-(*                                 2009-2018                                 *)
+(*                                 2009-2019                                 *)
 (* ========================================================================= *)
 
 let serv_dir = ref (!hol_dir ^ "/workflowfm/src/");;

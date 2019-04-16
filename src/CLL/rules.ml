@@ -4,7 +4,7 @@
 (*                   Petros Papapanagiotou, Jacques Fleuriot                 *)
 (*              Center of Intelligent Systems and their Applications         *)
 (*                           University of Edinburgh                         *)
-(*                                    2011                                   *)
+(*                                 2011-2019                                 *)
 (* ========================================================================= *)
 
 (* Dependencies *)
@@ -30,98 +30,96 @@ let ll_cut' =  prove (
 module Cllrules =
   functor (Cll : Cllproc_type) ->
   struct
+
+    let prove terms tac = 
+      let seqs = map (uncurry Cll.mk_cll) terms in
+      prove_seq (fold_comb `(===>)` seqs, tac) 
+
     (* The ll_par_input rule is a simple variation of ll_par applied directly to *)
     (* inputs. A composite input is created as we also use NEG_CLAUSES to        *)
     (* demonstrate that.                                                         *)
-    
-    let ll_par_input = prove_seq (
-      `(|-- (G^' (NEG A <> a)^' (NEG B <> b)) P) ===>
-	(|-- (G^' (NEG (A ** B) <> z)) (ParProc (NEG A) (NEG B) z a b P))`,
-      EEVERY [ ETAC (MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
-	ruleseq Cll.ll_par; seqassumption])
-
+      
+    let ll_par_input = prove [
+                           (`(G^' (NEG A <> a)^' (NEG B <> b))`,`P`);
+	                       (`G^' (NEG (A ** B) <> z)`,`ParProc (NEG A) (NEG B) z a b P`)]
+                         (EEVERY [ ETAC (MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
+	                               ruleseq Cll.ll_par; seqassumption])
+                     
       
     (* The ll_times_buf rules compose a service with a buffer using the ll_times *)
     (* rule.                                                                     *)
     (* The buffered output can be either added to the left or the right of the   *)
     (* original service's output.                                                *)
       
-    let ll_times_buf_right = prove_seq (
-      `(|-- (G ^ ' (A <> a)) P) ===>
-	(|-- (' (NEG B <> buf) ^ ' (B <> b)) Q) ===>
-	(|-- (G ^ ' (NEG B <> buf) ^ ' ((A ** B) <> z)) 
-	    (TimesProc A B z a b P Q))`,
-      EEVERY [ ETAC (REPEAT MDISCH_TAC) ;
-	ruleseq Cll.ll_times;
-	seqassumption]) 
+    let ll_times_buf_right = prove [
+                                 (`G ^ ' (A <> a)`,`P`);
+	                             (`' (NEG B <> buf) ^ ' (B <> b)`,`Q`);
+	                             (`G ^ ' (NEG B <> buf) ^ ' ((A ** B) <> z)`,`TimesProc A B z a b P Q`)]
+                               (EEVERY [ ETAC (REPEAT MDISCH_TAC) ;
+	                                     ruleseq Cll.ll_times;
+	                                     seqassumption]) 
     
-    let ll_times_buf_left = prove_seq (
-      `(|-- (G ^ ' (A <> a)) P) ===> 
-	(|-- (' (NEG B <> buf) ^ ' (B <> b)) Q) ===>
-	(|-- (' (NEG B <> buf) ^ G ^ ' ((B ** A) <> z))
-	    (TimesProc B A z b a Q P))`,
-      EEVERY [ ETAC (REPEAT MDISCH_TAC) ;
-	ruleseq Cll.ll_times;
-	seqassumption])   
+    let ll_times_buf_left = prove [
+                                (`G ^ ' (A <> a)`,`P`); 
+	                            (`' (NEG B <> buf) ^ ' (B <> b)`,`Q`);
+	                            (`' (NEG B <> buf) ^ G ^ ' ((B ** A) <> z)`,`TimesProc B A z b a Q P`)]
+                              (EEVERY [ ETAC (REPEAT MDISCH_TAC) ;
+	                                    ruleseq Cll.ll_times;
+	                                    seqassumption])   
     
       
     (* A weaker version of the ll_with rule that makes more sense in the web    *)
     (* services domain.                                                         *)
       
-    let ll_with_serv = prove_seq (
-      `(|-- (G ^ ' (NEG A <> a) ^ ' (B <> b)) P) ===> 
-	(|-- (G ^ ' (NEG C <> c) ^ ' (B <> b)) Q) ===>
-	(|-- (G ^ ' (NEG (A ++ C) <> x) ^ ' (B <> b))
-	    (WithProc (NEG A) (NEG C) x a c u v P Q))`,
-      EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
-	ruleseq Cll.ll_with; seqassumption])
+    let ll_with_serv = prove [
+                           (`G ^ ' (NEG A <> a) ^ ' (B <> b)`,`P`); 
+	                       (`G ^ ' (NEG C <> c) ^ ' (B <> b)`,`Q`);
+	                       (`G ^ ' (NEG (A ++ C) <> x) ^ ' (B <> b)`,`WithProc (NEG A) (NEG C) x a c u v P Q`)]
+                         (EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
+	                               ruleseq Cll.ll_with; seqassumption])
+                     
+                     
+    let ll_with_serv2 = prove [
+                            (`G ^ ' (NEG C <> c) ^ ' (B <> b)`,`Q`);
+	                        (`G ^ ' (NEG A <> a) ^ ' (B <> b)`,`P`);
+	                        (`G ^ ' (NEG (A ++ C) <> x) ^ ' (B <> b)`,`WithProc (NEG A) (NEG C) x a c u v P Q`)]
+                          (EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
+	                                ruleseq Cll.ll_with; seqassumption])
+                      
+    
+    let ll_with_buf_left1 = prove [
+                                (`' (NEG A <> na) ^ ' ((B ++ C) <> a)`,`P`);
+	                            (`' (NEG B <> buf) ^ ' (B <> b)`,`Q`);
+	                            (`' (NEG (B ++ A) <> no) ^ ' ((B ++ C) <> a)`,
+                                                             `WithProc (NEG B) (NEG A) no buf na u v (PlusLProc B C a b uu vv Q) P`)]
+                              ( EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
+	                                     ETHENL (ruleseq Cll.ll_with) [ruleseq Cll.ll_plus1 ; ALL_ETAC] ;
+	                                     seqassumption])
+    
+    let ll_with_buf_right1 = prove [
+                                 (`' (NEG A <> na) ^ ' ((B ++ C) <> a)`,`P`);
+	                             (`' (NEG B <> buf) ^ ' (B <> b)`,`Q`);
+	                             (`' (NEG (A ++ B) <> no) ^ ' ((B ++ C) <> a)`,`WithProc (NEG A) (NEG B) no na buf u v P (PlusLProc B C a b uu vv Q)`)]
+                               (EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
+	                                     ETHENL (ruleseq Cll.ll_with) [ALL_ETAC ; ruleseq Cll.ll_plus1] ;
+	                                     seqassumption])
+    
+    let ll_with_buf_left2 = prove [
+                                (`' (NEG A <> na) ^ ' ((B ++ C) <> a)`,`P`);
+	                            (`' (NEG C <> buf) ^ ' (C <> c)`,`Q`);
+	                            (`' (NEG (C ++ A) <> no) ^ ' ((B ++ C) <> a)`,`WithProc (NEG C) (NEG A) no buf na u v (PlusRProc B C a c uu vv Q) P`)]
+                              (EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
+	                                    ETHENL (ruleseq Cll.ll_with) [ruleseq Cll.ll_plus2 ; ALL_ETAC] ;
+	                                    seqassumption])
     
     
-    let ll_with_serv2 = prove_seq (
-      `(|-- (G ^ ' (NEG C <> c) ^ ' (B <> b)) Q) ===>
-	(|-- (G ^ ' (NEG A <> a) ^ ' (B <> b)) P) ===> 
-	(|-- (G ^ ' (NEG (A ++ C) <> x) ^ ' (B <> b))
-	    (WithProc (NEG A) (NEG C) x a c u v P Q))`,
-      EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
-	ruleseq Cll.ll_with; seqassumption])
-    
-    
-    let ll_with_buf_left1 = prove_seq (
-      `(|-- (' (NEG A <> na) ^ ' ((B ++ C) <> a)) P) ===>
-	(|-- (' (NEG B <> buf) ^ ' (B <> b)) Q) ===>
-	(|-- (' (NEG (B ++ A) <> no) ^ ' ((B ++ C) <> a)) 
-	    (WithProc (NEG B) (NEG A) no buf na u v (PlusLProc B C a b uu vv Q) P))`,
-      EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
-	       ETHENL (ruleseq Cll.ll_with) [ruleseq Cll.ll_plus1 ; ALL_ETAC] ;
-	       seqassumption])
-    
-    let ll_with_buf_right1 = prove_seq (
-      `(|-- (' (NEG A <> na) ^ ' ((B ++ C) <> a)) P) ===>
-	(|-- (' (NEG B <> buf) ^ ' (B <> b)) Q) ===>
-	(|-- (' (NEG (A ++ B) <> no) ^ ' ((B ++ C) <> a)) 
-	    (WithProc (NEG A) (NEG B) no na buf u v P (PlusLProc B C a b uu vv Q)))`,
-      EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
-	       ETHENL (ruleseq Cll.ll_with) [ALL_ETAC ; ruleseq Cll.ll_plus1] ;
-	       seqassumption])
-    
-    let ll_with_buf_left2 = prove_seq (
-      `(|-- (' (NEG A <> na) ^ ' ((B ++ C) <> a)) P) ===>
-	(|-- (' (NEG C <> buf) ^ ' (C <> c)) Q) ===>
-	(|-- (' (NEG (C ++ A) <> no) ^ ' ((B ++ C) <> a)) 
-	    (WithProc (NEG C) (NEG A) no buf na u v (PlusRProc B C a c uu vv Q) P))`,
-      EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
-	       ETHENL (ruleseq Cll.ll_with) [ruleseq Cll.ll_plus2 ; ALL_ETAC] ;
-	       seqassumption])
-    
-    
-    let ll_with_buf_right2 = prove_seq (
-      `(|-- (' (NEG A <> na) ^ ' ((B ++ C) <> a)) P) ===>
-	(|-- (' (NEG C <> buf) ^ ' (C <> c)) Q) ===>
-	(|-- (' (NEG (A ++ C) <> no) ^ ' ((B ++ C) <> a)) 
-	    (WithProc (NEG A) (NEG C) no na buf u v P (PlusRProc B C a c uu vv Q)))`,
-      EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
-	       ETHENL (ruleseq Cll.ll_with) [ALL_ETAC ; ruleseq Cll.ll_plus2] ;
-	       seqassumption])
+    let ll_with_buf_right2 = prove [
+                                 (`' (NEG A <> na) ^ ' ((B ++ C) <> a)`,`P`);
+	                             (`' (NEG C <> buf) ^ ' (C <> c)`,`Q`);
+	                             (`' (NEG (A ++ C) <> no) ^ ' ((B ++ C) <> a)`,`WithProc (NEG A) (NEG C) no na buf u v P (PlusRProc B C a c uu vv Q)`)]
+                               (EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
+	                                     ETHENL (ruleseq Cll.ll_with) [ALL_ETAC ; ruleseq Cll.ll_plus2] ;
+	                                     seqassumption])
     
     
     (* The ll_with_outputs rule, enables the application of the ll_with rule on  *)
@@ -134,32 +132,30 @@ module Cllrules =
     (* This is because there is no way to force B to be a positive literal and   *)
     (* thus may be matched to a NEG.                                             *)
       
-    let ll_with_outputs = prove_seq (
-      `(|-- (G ^ ' (NEG A <> a) ^ ' (B <> b)) P) ===> 
-	(|-- (G ^ ' (NEG C <> c) ^ ' (D <> d)) Q) ===>
-	(|-- (G ^ ' (NEG (A ++ C) <> x) ^ ' ((B ++ D) <> y))
-	    (WithProc (NEG A) (NEG C) x a c u v 
-	       (PlusLProc B D y b up vp P)
-	       (PlusRProc B D y d uq vq Q)))`,
-      EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
-	       ETHENL (ruleseq Cll.ll_with) [ruleseq Cll.ll_plus1 ; ruleseq Cll.ll_plus2] ;
-	       seqassumption])
+    let ll_with_outputs = prove [
+                              (`G ^ ' (NEG A <> a) ^ ' (B <> b)`,`P`); 
+	                          (`G ^ ' (NEG C <> c) ^ ' (D <> d)`,`Q`);
+	                          (`G ^ ' (NEG (A ++ C) <> x) ^ ' ((B ++ D) <> y)`,`WithProc (NEG A) (NEG C) x a c u v 
+	                                                          (PlusLProc B D y b up vp P)
+	                                                          (PlusRProc B D y d uq vq Q)`)]
+                            (EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
+	                                  ETHENL (ruleseq Cll.ll_with) [ruleseq Cll.ll_plus1 ; ruleseq Cll.ll_plus2] ;
+	                                  seqassumption])
     
     (* ------------------------------------------------------------------------- *)
     (* Different version of the previous rule so that the second premise is the  *)
     (* major one, for use with drule.                                            *)
     (* ------------------------------------------------------------------------- *)
       
-    let ll_with_outputs2 = prove_seq (
-      `(|-- (G ^ ' (NEG C <> c) ^ ' (D <> d)) Q) ===>
-	(|-- (G ^ ' (NEG A <> a) ^ ' (B <> b)) P) ===> 
-	(|-- (G ^ ' (NEG (A ++ C) <> x) ^ ' ((B ++ D) <> y))
-	    (WithProc (NEG A) (NEG C) x a c u v 
-	       (PlusLProc B D y b up vp P)
-	       (PlusRProc B D y d uq vq Q)))`,
-      EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
-	       ETHENL (ruleseq Cll.ll_with) [ruleseq Cll.ll_plus1 ; ruleseq Cll.ll_plus2] ;
-	       seqassumption])
+    let ll_with_outputs2 = prove [
+                               (`G ^ ' (NEG C <> c) ^ ' (D <> d)`,`Q`);
+	                           (`G ^ ' (NEG A <> a) ^ ' (B <> b)`,`P`); 
+	                           (`G ^ ' (NEG (A ++ C) <> x) ^ ' ((B ++ D) <> y)`,`WithProc (NEG A) (NEG C) x a c u v 
+	                                                           (PlusLProc B D y b up vp P)
+	                                                           (PlusRProc B D y d uq vq Q)`)]
+                             (EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
+	                                   ETHENL (ruleseq Cll.ll_with) [ruleseq Cll.ll_plus1 ; ruleseq Cll.ll_plus2] ;
+	                                   seqassumption])
     
     
     (* ------------------------------------------------------------------------- *)
@@ -172,24 +168,25 @@ module Cllrules =
     (* case.                                                                     *)
     (* ------------------------------------------------------------------------- *)
     
-    let ll_with_self = prove_seq (
-      `(|-- (G ^ ' (NEG A <> a) ^ ' (NEG B <> b) ^ ' (C <> c)) P) ===>
-	(|-- (' ((NEG A) <> na) ^ ' (A <> aa) ) Pa) ===>
-	(|-- (' ((NEG B) <> nb) ^ ' (B <> bb) ) Pb) ===>
-	(|-- (G ^ ' (NEG (A ++ B) <> x) ^ ' (NEG A <> a) ^ ' (NEG B <> b) 
-	      ^ ' (((C ** A) ++ (C ** B)) <> y)) 
-	    (WithProc (NEG A) (NEG B) x na nb u v
-	       (PlusLProc (C ** A) (C ** B) y xl ul vl (TimesProc C A xl c aa P Pa))
-	       (PlusRProc (C ** A) (C ** B) y yr ur vr (TimesProc C B yr c bb P Pb))))`,
-      EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
-	       ETHENL (ruleseq Cll.ll_with)
-	[ ETHEN (ruleseq Cll.ll_plus1)
-	    (rule_seqtac 
-	    [(`G`,`G ^' (NEG B <> b)^' (NEG A <> a)`);(`B`,`A`)] ll_times_buf_right) ;
-	  ETHEN (ruleseq Cll.ll_plus2)
-	    (rule_seqtac 
-	    [(`G`,`G ^' (NEG A <> a)^' (NEG B <> b)`);(`B`,`B`)] ll_times_buf_right) ];
-	       seqassumption])
+    let ll_with_self = prove [
+                           (`G ^ ' (NEG A <> a) ^ ' (NEG B <> b) ^ ' (C <> c)`,`P`);
+	                       (`' ((NEG A) <> na) ^ ' (A <> aa)`,`Pa`);
+	                       (`' ((NEG B) <> nb) ^ ' (B <> bb)`,`Pb`);
+	                       (`G ^ ' (NEG (A ++ B) <> x) ^ ' (NEG A <> a) ^ ' (NEG B <> b) 
+	                        ^ ' (((C ** A) ++ (C ** B)) <> y)`,`WithProc (NEG A) (NEG B) x na nb u v
+	                            (PlusLProc (C ** A) (C ** B) y xl ul vl (TimesProc C A xl c aa P Pa))
+	                            (PlusRProc (C ** A) (C ** B) y yr ur vr (TimesProc C B yr c bb P Pb))`)]
+                         (EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
+	                               ETHENL (ruleseq Cll.ll_with)
+	                                 [ ETHEN (ruleseq Cll.ll_plus1)
+	                                     (rule_seqtac 
+	                                        [(`G`,`G ^' (NEG B <> b)^' (NEG A <> a)`);(`B`,`A`)] 
+                                            ll_times_buf_right) ;
+	                                   ETHEN (ruleseq Cll.ll_plus2)
+	                                     (rule_seqtac 
+	                                        [(`G`,`G ^' (NEG A <> a)^' (NEG B <> b)`);(`B`,`B`)] 
+                                            ll_times_buf_right) ];
+	                               seqassumption])
 
 
       
@@ -199,21 +196,21 @@ module Cllrules =
     (* respectively.                                                             *)
     (* ------------------------------------------------------------------------- *)
 			     
-    let ll_filter_input = prove_seq (
-      `(|-- (' (NEG A <> a) ^ G) Q) ===>
-	(|-- (' (NEG B <> b) ^ ' (A <> a)) P) ===> 
-	(|-- (' (NEG B <> b) ^ G) (CutProc A z a a Q P))`,
-      EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
-	rule_seqtac [`C:LinProp`,`A:LinProp`] Cll.ll_cut;
-	seqassumption])
-      
-    let ll_filter_output = prove_seq (
-      `(|-- (G ^ ' (A <> a)) Q) ===>
-	(|-- (' (NEG A <> a) ^ ' (B <> b)) P) ===> 
-	(|-- (G ^ ' (B <> b)) (CutProc A z a a P Q))`,
-      EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
-	rule_seqtac [`C:LinProp`,`A:LinProp`] Cll.ll_cut;
-	seqassumption])
+    let ll_filter_input = prove [
+                              (`' (NEG A <> a) ^ G`,`Q`);
+	                          (`' (NEG B <> b) ^ ' (A <> a)`,`P`); 
+	                          (`' (NEG B <> b) ^ G`,`CutProc A z a a Q P`)]
+                            (EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
+	                                  rule_seqtac [`C:LinProp`,`A:LinProp`] Cll.ll_cut;
+	                                  seqassumption])
+                        
+    let ll_filter_output = prove [
+                               (`G ^ ' (A <> a)`,`Q`);
+	                           (`' (NEG A <> a) ^ ' (B <> b)`,`P`); 
+	                           (`G ^ ' (B <> b)`,`CutProc A z a a P Q`)]
+                             (EEVERY [ ETAC (REPEAT MDISCH_TAC THEN REWRITE_TAC[NEG_CLAUSES]); 
+	                                   rule_seqtac [`C:LinProp`,`A:LinProp`] Cll.ll_cut;
+	                                   seqassumption])
 
 
   end;;
@@ -244,6 +241,3 @@ e (REWRITE_TAC[NEG_CLAUSES]);;
 
 
 *)
-
-
-

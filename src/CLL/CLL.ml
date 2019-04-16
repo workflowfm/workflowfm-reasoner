@@ -4,13 +4,14 @@
 (*                   Petros Papapanagiotou, Jacques Fleuriot                 *)
 (*              Center of Intelligent Systems and their Applications         *)
 (*                           University of Edinburgh                         *)
-(*                                 2009-2012                                 *)
+(*                                 2009-2019                                 *)
 (* ========================================================================= *)
 
 (* Dependencies *)
 
 needs "IsabelleLight/make.ml";;
 needs "tools/make.ml";;
+needs "tools/Library/multisets.ml";; (* We need the multiset type in Cll_terms *)
 
 (* ------------------------------------------------------------------------- *)
 (* Formalisation of Classical Propositional Linear Logic                     *)
@@ -19,16 +20,16 @@ needs "tools/make.ml";;
 (* Type definition: Propositional Linear Logic term. *)
 
 let linprop_INDUCT,linprop_RECURSION = define_type
-    "LinProp = LinOne
-              | Bottom
-	      | Top
-	      | LinZero
-              | OfCourse LinProp
-              | WhyNot LinProp
-              | LinPlus LinProp LinProp
-              | LinWith LinProp LinProp
-              | LinTimes LinProp LinProp
-              | LinPar LinProp LinProp"
+                                         "LinProp = LinOne
+                                          | Bottom
+	                                      | Top
+	                                      | LinZero
+                                          | OfCourse LinProp
+                                          | WhyNot LinProp
+                                          | LinPlus LinProp LinProp
+                                          | LinWith LinProp LinProp
+                                          | LinTimes LinProp LinProp
+                                          | LinPar LinProp LinProp"
 ;;
 
 
@@ -152,6 +153,8 @@ let invert_ll_term tm =
 (*   [[`A`; `C`; `E`]; [`A`; `C`; `F`]; [`A`; `D`; `E`]; [`A`; `D`; `F`];    *)
 (*   [`B`; `C`; `E`]; [`B`; `C`; `F`]; [`B`; `D`; `E`]; [`B`; `D`; `F`]]     *)
 (* ------------------------------------------------------------------------- *)
+(* This is not currently being used, but kept here for future reference.     *)
+(* ------------------------------------------------------------------------- *)
 
 let ll_resources tm =
   let times r x = map (fun y -> x @ y) r in
@@ -187,15 +190,15 @@ module Cll_terms: sig
   val mk_plusR_proc : hol_type -> hol_type -> (term->term->term->term->term->term->term->term) -> term
   val mk_cut_proc : hol_type -> hol_type -> (term->term->term->term->term->term->term) -> term
 
-  val mk_id_rule : hol_type -> hol_type -> thm -> term
-  val mk_times_rule : hol_type -> hol_type -> thm -> term
-  val mk_par_rule : hol_type -> hol_type -> thm -> term
-  val mk_with_rule : hol_type -> hol_type -> thm -> term
-  val mk_plusL_rule : hol_type -> hol_type -> thm -> term
-  val mk_plusR_rule : hol_type -> hol_type -> thm -> term
-  val mk_cut_rule : hol_type -> hol_type -> thm -> term
+  val mk_id_rule : string -> hol_type -> hol_type -> thm -> term
+  val mk_times_rule : string -> hol_type -> hol_type -> thm -> term
+  val mk_par_rule : string -> hol_type -> hol_type -> thm -> term
+  val mk_with_rule : string -> hol_type -> hol_type -> thm -> term
+  val mk_plusL_rule : string -> hol_type -> hol_type -> thm -> term
+  val mk_plusR_rule : string -> hol_type -> hol_type -> thm -> term
+  val mk_cut_rule : string -> hol_type -> hol_type -> thm -> term
 
-  val mk_cll_rules : hol_type -> hol_type -> thm->thm->thm->thm->thm->thm->thm -> term
+  val mk_cll_rules : string -> hol_type -> hol_type -> thm->thm->thm->thm->thm->thm->thm -> term
 
 end = struct
 
@@ -263,9 +266,10 @@ end = struct
       mk_eq (def_lhs,def_rhs)
 
 	    
-  let mk_oper tp chantp = inst [(chantp,`:CHANTP`);(tp,`:TP`)] `((|--):((CHANTP)LinTerm)multiset->TP->bool)` 
-  let mk_rule tp chantp procdef asms asmprocs conc =
-    let oper = mk_oper tp chantp 
+  let mk_oper st tp chantp = inst [(chantp,`:CHANTP`);(tp,`:TP`)] (mk_var (st,`:((CHANTP)LinTerm)multiset->TP->bool`))
+ 
+  let mk_rule oper tp chantp procdef asms asmprocs conc =
+    let oper = mk_oper oper tp chantp 
     and asms' = map (inst [chantp,`:CHANTP`]) asms
     and asmprocs' = map (inst [tp,`:TP`]) asmprocs
     and conc' = inst [chantp,`:CHANTP`] conc
@@ -282,57 +286,57 @@ end = struct
 
     create_rule (map mk_lin (zip asms' asmprocs'),mk_lin (conc',proc))
 		
-  let mk_id_rule tp chantp thm =
-    mk_rule tp chantp thm
+  let mk_id_rule oper tp chantp thm =
+    mk_rule oper tp chantp thm
 	    []
 	    []
 	    `(' (NEG A <> x) ^ ' (A <> y)):((CHANTP)LinTerm)multiset`
 
-  let mk_times_rule tp chantp thm =
-    mk_rule tp chantp thm
+  let mk_times_rule oper tp chantp thm =
+    mk_rule oper tp chantp thm
 	    [`(G ^ ' (A <> x)):((CHANTP)LinTerm)multiset`;`(D ^ ' (B <> y)):((CHANTP)LinTerm)multiset`]
 	    [`P:TP`;`Q:TP`]
 	    `(G ^ D ^ ' ((A ** B) <> z)):((CHANTP)LinTerm)multiset`
 
-  let mk_par_rule tp chantp thm =
-    mk_rule tp chantp thm
+  let mk_par_rule oper tp chantp thm =
+    mk_rule oper tp chantp thm
 	    [`(G ^ ' (A <> x) ^ ' (B <> y)):((CHANTP)LinTerm)multiset`]
 	    [`P:TP`]
 	    `(G ^ ' ((A % B) <> z)):((CHANTP)LinTerm)multiset`
 
-  let mk_with_rule tp chantp thm =
-    mk_rule tp chantp thm
+  let mk_with_rule oper tp chantp thm =
+    mk_rule oper tp chantp thm
 	    [`(G ^ ' (A <> x)):((CHANTP)LinTerm)multiset`;`(G ^ ' (B <> y)):((CHANTP)LinTerm)multiset`]
 	    [`P:TP`;`Q:TP`]
 	    `(G ^ ' ((A & B) <> z)):((CHANTP)LinTerm)multiset`
 
-  let mk_plusL_rule tp chantp thm =
-    mk_rule tp chantp thm
+  let mk_plusL_rule oper tp chantp thm =
+    mk_rule oper tp chantp thm
 	    [`(G ^ ' (A <> x)):((CHANTP)LinTerm)multiset`]
 	    [`P:TP`]
 	    `(G ^ ' ((A ++ B) <> z)):((CHANTP)LinTerm)multiset`
 
-  let mk_plusR_rule tp chantp thm =
-    mk_rule tp chantp thm
+  let mk_plusR_rule oper tp chantp thm =
+    mk_rule oper tp chantp thm
 	    [`(G ^ ' (B <> y)):((CHANTP)LinTerm)multiset`]
 	    [`Q:TP`]
 	    `(G ^ ' ((A ++ B) <> z)):((CHANTP)LinTerm)multiset`
 
-  let mk_cut_rule tp chantp thm =
-    mk_rule tp chantp thm
+  let mk_cut_rule oper tp chantp thm =
+    mk_rule oper tp chantp thm
 	    [`(' (NEG C <> x) ^ D):((CHANTP)LinTerm)multiset`;`(G ^ ' (C <> y)):((CHANTP)LinTerm)multiset`] 
 	    [`P:TP`;`Q:TP`]
 	    `(G ^ D):((CHANTP)LinTerm)multiset`
 
-  let mk_cll_rules tp chantp idthm timesthm parthm withthm plusLthm plusRthm cutthm =
+  let mk_cll_rules oper tp chantp idthm timesthm parthm withthm plusLthm plusRthm cutthm =
     list_mk_conj [
-      mk_id_rule tp chantp idthm;
-      mk_times_rule tp chantp timesthm;
-      mk_par_rule tp chantp parthm;
-      mk_with_rule tp chantp withthm;
-      mk_plusL_rule tp chantp plusLthm;
-      mk_plusR_rule tp chantp plusRthm;
-      mk_cut_rule tp chantp cutthm ]
+      mk_id_rule oper tp chantp idthm;
+      mk_times_rule oper tp chantp timesthm;
+      mk_par_rule oper tp chantp parthm;
+      mk_with_rule oper tp chantp withthm;
+      mk_plusL_rule oper tp chantp plusLthm;
+      mk_plusR_rule oper tp chantp plusRthm;
+      mk_cut_rule oper tp chantp cutthm ]
 end;;
 
 

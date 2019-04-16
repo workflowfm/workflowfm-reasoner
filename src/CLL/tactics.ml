@@ -4,7 +4,7 @@
 (*                   Petros Papapanagiotou, Jacques Fleuriot                 *)
 (*              Center of Intelligent Systems and their Applications         *)
 (*                           University of Edinburgh                         *)
-(*                                  2011-2015                                *)
+(*                                  2011-2019                                *)
 (* ========================================================================= *)
 
 (* Dependencies *)

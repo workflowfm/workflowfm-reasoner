@@ -4,7 +4,7 @@
 (*                   Petros Papapanagiotou, Jacques Fleuriot                 *)
 (*              Center of Intelligent Systems and their Applications         *)
 (*                           University of Edinburgh                         *)
-(*                                 2009-2012                                 *)
+(*                                 2009-2019                                 *)
 (* ========================================================================= *)
 
 (* Dependencies *)
@@ -172,6 +172,7 @@ let reduce_pap_subs tm =
 
 module Pi_calc : Process_calculus =
 struct
+  let consequence = "|--"
   let chantp = `:num`
   let tp = `:NAgent`
   let fn = `FNL:NAgent->(num)list`
