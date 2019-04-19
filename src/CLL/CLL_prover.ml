@@ -41,6 +41,7 @@ module type Cllproc_type =
 sig
   module Pcalc:Process_calculus
 
+  val oper : term
   val cll_to_proc : term -> term
   (* A converter from a CLL specification       *)
   (* (multiset of CLL terms) to a corresponding *)
