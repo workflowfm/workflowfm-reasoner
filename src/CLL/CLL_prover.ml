@@ -149,13 +149,13 @@ struct
     let mk_chan (n,i) = linprop_to_chan prefix (string_of_int i) n in
     map mk_chan (zip tms (1--(length tms)))
  		
-  let ID_PROC = new_definition (Cll_terms.mk_id_proc Proc.tp Proc.chantp Proc.llid)
-  let TIMES_PROC = new_definition (Cll_terms.mk_times_proc Proc.tp Proc.chantp Proc.lltimes)
-  let PAR_PROC = new_definition (Cll_terms.mk_par_proc Proc.tp Proc.chantp Proc.llpar)
-  let WITH_PROC = new_definition (Cll_terms.mk_with_proc Proc.tp Proc.chantp Proc.llwith)   
-  let PLUSL_PROC = new_definition (Cll_terms.mk_plusL_proc Proc.tp Proc.chantp Proc.llplusL)  
-  let PLUSR_PROC = new_definition (Cll_terms.mk_plusR_proc Proc.tp Proc.chantp Proc.llplusR)  
-  let CUT_PROC = new_definition (Cll_terms.mk_cut_proc Proc.tp Proc.chantp Proc.llcut)
+  let ID_PROC = new_definition (Cll_terms.mk_id_proc Proc.prefix Proc.tp Proc.chantp Proc.llid)
+  let TIMES_PROC = new_definition (Cll_terms.mk_times_proc Proc.prefix Proc.tp Proc.chantp Proc.lltimes)
+  let PAR_PROC = new_definition (Cll_terms.mk_par_proc Proc.prefix Proc.tp Proc.chantp Proc.llpar)
+  let WITH_PROC = new_definition (Cll_terms.mk_with_proc Proc.prefix Proc.tp Proc.chantp Proc.llwith)   
+  let PLUSL_PROC = new_definition (Cll_terms.mk_plusL_proc Proc.prefix Proc.tp Proc.chantp Proc.llplusL)  
+  let PLUSR_PROC = new_definition (Cll_terms.mk_plusR_proc Proc.prefix Proc.tp Proc.chantp Proc.llplusR)  
+  let CUT_PROC = new_definition (Cll_terms.mk_cut_proc Proc.prefix Proc.tp Proc.chantp Proc.llcut)
 
   let CLL_PROCS = [ID_PROC;TIMES_PROC;PAR_PROC;WITH_PROC;PLUSL_PROC;PLUSR_PROC;CUT_PROC]
 

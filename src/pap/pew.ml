@@ -20,22 +20,22 @@ let rec linprop_to_piobj chanOf prefix tm =
       if (is_var comb) then 
 	let name = prefix ^ "_a_" ^ (chanOf comb) in
 	"Chan(\"" ^ name ^ "\")" 
-      else if (comb = `NEG`) then
+      else if (is_strcomb "NEG" comb) then
         let name = prefix ^ "_a_" ^ ((chanOf o hd) args) in
 	"Chan(\"" ^ name ^ "\")" 
-      else if (comb = `LinTimes`) then
+      else if (is_strcomb "LinTimes" comb) then
         let lobj = linprop_to_piobj chanOf (prefix ^ "l") (hd args)
 	and robj = linprop_to_piobj chanOf (prefix ^ "r") ((hd o tl) args) in
 	"PiPair(" ^ lobj ^ "," ^ robj ^ ")"
-      else if (comb = `LinPar`) then
+      else if (is_strcomb "LinPar" comb) then
         let lobj = linprop_to_piobj chanOf (prefix ^ "l") (hd args)
 	and robj = linprop_to_piobj chanOf (prefix ^ "r") ((hd o tl) args) in
 	"PiPair(" ^ lobj ^ "," ^ robj ^ ")"
-      else if (comb = `LinPlus`) then
+      else if (is_strcomb "LinPlus" comb) then
         let lobj = linprop_to_piobj chanOf (prefix ^ "l") (hd args)
 	and robj = linprop_to_piobj chanOf (prefix ^ "r") ((hd o tl) args) in
 	"PiOpt(" ^ lobj ^ "," ^ robj ^ ")"
-      else if (comb = `LinWith`) then
+      else if (is_strcomb "LinWith" comb) then
         let lobj = linprop_to_piobj chanOf (prefix ^ "l") (hd args)
 	and robj = linprop_to_piobj chanOf (prefix ^ "r") ((hd o tl) args) in
 	"PiOpt(" ^ lobj ^ "," ^ robj ^ ")"
@@ -51,31 +51,31 @@ let rec scala_of_pat t =
   let quot t = "\"" ^ (string_of_term t) ^ "\"" in
   let comb,args = strip_comb t in
 
-  if (comb = `CutProc`) then
+  if (is_strcomb "PiCutProc" comb) then
     let _ :: c :: cl :: cr :: l :: r :: [] = args in
     "PiCut(" ^ (quot c) ^ "," ^ (quot cl) ^ "," ^ (quot cr) ^ "," ^ (scala_of_pat l) ^ "," ^ (scala_of_pat r) ^ ")"
 
-  else if (comb = `ParProc`) then
+  else if (is_strcomb "PiParProc" comb) then
     let _ :: _ :: z :: cl :: cr :: c :: [] = args in
     "ParInI(" ^ (quot z) ^ "," ^ (quot cl) ^ "," ^ (quot cr) ^ "," ^ (scala_of_pat c) ^ ")"
 
-  else if (comb = `WithProc`) then
+  else if (is_strcomb "PiWithProc" comb) then
     let _ :: _ :: z :: cl :: cr :: _ :: _ :: l :: r :: [] = args in
     "WithIn(" ^ (quot z) ^ "," ^ (quot cl) ^ "," ^ (quot cr) ^ "," ^ (scala_of_pat l) ^ "," ^ (scala_of_pat r) ^ ")"
 
-  else if (comb = `TimesProc`) then
+  else if (is_strcomb "PiTimesProc" comb) then
     let _ :: _ :: z :: cl :: cr :: l :: r :: [] = args in
     "ParOut(" ^ (quot z) ^ "," ^ (quot cl) ^ "," ^ (quot cr) ^ "," ^ (scala_of_pat l) ^ "," ^ (scala_of_pat r) ^ ")"
 
-  else if (comb = `PlusLProc`) then
+  else if (is_strcomb "PiPlusLProc" comb) then
     let _ :: _ :: z :: cl :: _ :: _ :: c :: [] = args in
     "LeftOut(" ^ (quot z) ^ "," ^ (quot cl) ^ "," ^ (scala_of_pat c) ^ ")"
 
-  else if (comb = `PlusRProc`) then
+  else if (is_strcomb "PiPlusRProc" comb) then
     let _ :: _ :: z :: cr :: _ :: _ :: c :: [] = args in
     "RightOut(" ^ (quot z) ^ "," ^ (quot cr) ^ "," ^ (scala_of_pat c) ^ ")"
 
-  else if (comb = `IdProc`) then
+  else if (is_strcomb "PiIdProc" comb) then
     let _ :: cl :: cr :: a :: [] = args in
     "PiId(" ^ (quot cl) ^ "," ^ (quot cr) ^ "," ^ (quot a) ^ ")"
      

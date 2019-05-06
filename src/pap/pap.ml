@@ -173,8 +173,10 @@ let reduce_pap_subs tm =
 module Pi_calc : Process_calculus =
 struct
   let consequence = "|--"
+  let prefix = "Pi"
   let chantp = `:num`
   let tp = `:NAgent`
+
   let fn = `FNL:NAgent->(num)list`
   let bn = `BNL:NAgent->(num)list`
   let names = `NAMESL:NAgent->(num)list`

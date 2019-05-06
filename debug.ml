@@ -1,33 +1,33 @@
-let xcll = Proc.get_cll mypa;;
-  let xname = mypa.Proc.name;;
-  let xins = find_input_terms xcll
-  and xout = find_output_term xcll;; 
+ xcll = Proc.get_cll mypa;;
+ let xname = mypa.Proc.name;;
+ let xins = find_input_terms xcll
+ and xout = find_output_term xcll;; 
 
-  let xterm = (rhs o concl o (PURE_REWRITE_CONV[NEG_NEG;NEG_CLAUSES])) xcll;;
-  let xis_type x = (is_var x) && (type_of x = `:LinProp`);;
-  let xtypes = map ((fun x -> (String.lowercase x,x)) o fst o dest_var) (find_terms xis_type xcll);;
-  in ((scala_service_io depth types output) o (linterm_to_pi Cllpi.linprop_to_name)) term;;
+ let xterm = (rhs o concl o (PURE_REWRITE_CONV[NEG_NEG;NEG_CLAUSES])) xcll;;
+ let xis_type x = (is_var x) && (type_of x = `:LinProp`);;
+ let xtypes = map ((fun x -> (String.lowercase x,x)) o fst o dest_var) (find_terms xis_type xcll);;
+ in ((scala_service_io depth types output) o (linterm_to_pi Cllpi.linprop_to_name)) term;;
 
-  let xtm = `(NEG A <> cPa_A_1:num)`;;
-let myf tm =
-  let chan = rand tm in
-  linprop_to_pi Cllpi.linprop_to_name (string_of_term chan ^ "_") chan `C:LinProp`;;
+ let xtm = `(NEG A <> cPa_A_1:num)`;;
+             let myf tm =
+               let chan = rand tm in
+               linprop_to_pi Cllpi.linprop_to_name (string_of_term chan ^ "_") chan `C:LinProp`;;
 
-myf xtm;;
-  
-BufferBug
-  Optionals: A ++ B --> A ++ C ++ D
-    A ++ B ++ C --> A ++ B
-      A --> A ++ B
-	A ++ B --> A ++ C
-	  Ctrl - S
-	  notes
-	  "Create copy node" + different icon
-	  "Create join node" + different icon
-	  Several create process windows
-	  Load compositions into existing workspace
+                                                                                         myf xtm;;
+ 
+ BufferBug
+   Optionals: A ++ B --> A ++ C ++ D
+                                     A ++ B ++ C --> A ++ B
+                                                            A --> A ++ B
+	                                                                     A ++ B --> A ++ C
+	                                                                                       Ctrl - S
+	                                                                                                notes
+	                                                                                                "Create copy node" + different icon
+	                                                                                                                       "Create join node" + different icon
+	                                                                                                                                              Several create process windows
+	                                                                                                                                              Load compositions into existing workspace
 
-	  
+ 
 let explode_char s =
   let rec exap n l =
       if n < 0 then l else
@@ -409,14 +409,14 @@ let mypb = Proc.create "Pb" [`B ++ A`;`D ++ C`] `Y`;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "NEG (B ++ A)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `C ++ (A ** B)`;;
-let mypb = Proc.create "Pb" [`C`] `B ** A`;;
-let mypb = Proc.create "Pb" [`C`] `A ** B`;;
+let mypa = Proc.create "Pa" [`X`] `C ++ (A ** B)` ;;
+let mypb = Proc.create "Pb" [`C`] `B ** A` ;;
+let mypb = Proc.create "Pb" [`C`] `A ** B` ;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "NEG C" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `C ++ (A ** (B ++ D))`;;
-let mypb = Proc.create "Pb" [`C`] `(B ++ D) ** A`;;
+let mypa = Proc.create "Pa" [`X`] `C ++ (A ** (B ++ D))` ;;
+let mypb = Proc.create "Pb" [`C`] `(B ++ D) ** A` ;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "NEG C" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
@@ -2032,7 +2032,6 @@ let myr2 = fst(mycomp "R2" [myr1;mypc] [myact2]);;
 
 scala_deploy_print "/" "/home/kane/PapPiLib/" "uk.ac.ed.skiexample" "SkiExample" myr2 [mypa;mypb;mypc;myr1] true true;;
 
-
 print_string(scala_proc 0 mypa);;
 print_string(scala_proc 0 mypb);;
 print_string(scala_proc 0 myr1);;
@@ -2123,3 +2122,11 @@ Hashtbl.find processes "Px";;
 create "Pa" [`N`] `G`;;
 create "Pb" [`W`] `Y ++ N`;;
 compose1 "JOIN" "Pb" "r" "Pa" "(NEG N)";;
+
+
+module Xrules = Cllrules(Cllpi);;
+Xrules.ll_with_self;;
+(* ------------------------------------------------------------------------------------*)
+
+(* Web stuff! *)
+

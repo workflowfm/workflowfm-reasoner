@@ -182,13 +182,13 @@ let ll_resources tm =
 (* ------------------------------------------------------------------------- *)
 
 module Cll_terms: sig
-  val mk_id_proc : hol_type -> hol_type -> (term->term->term->term->term) -> term
-  val mk_times_proc : hol_type -> hol_type -> (term->term->term->term->term->term->term->term) -> term
-  val mk_par_proc : hol_type -> hol_type -> (term->term->term->term->term->term->term) -> term
-  val mk_with_proc : hol_type -> hol_type -> (term->term->term->term->term->term->term->term->term->term) -> term
-  val mk_plusL_proc : hol_type -> hol_type -> (term->term->term->term->term->term->term->term) -> term
-  val mk_plusR_proc : hol_type -> hol_type -> (term->term->term->term->term->term->term->term) -> term
-  val mk_cut_proc : hol_type -> hol_type -> (term->term->term->term->term->term->term) -> term
+  val mk_id_proc : string -> hol_type -> hol_type -> (term->term->term->term->term) -> term
+  val mk_times_proc : string -> hol_type -> hol_type -> (term->term->term->term->term->term->term->term) -> term
+  val mk_par_proc : string -> hol_type -> hol_type -> (term->term->term->term->term->term->term) -> term
+  val mk_with_proc : string -> hol_type -> hol_type -> (term->term->term->term->term->term->term->term->term->term) -> term
+  val mk_plusL_proc : string -> hol_type -> hol_type -> (term->term->term->term->term->term->term->term) -> term
+  val mk_plusR_proc : string -> hol_type -> hol_type -> (term->term->term->term->term->term->term->term) -> term
+  val mk_cut_proc : string -> hol_type -> hol_type -> (term->term->term->term->term->term->term) -> term
 
   val mk_id_rule : string -> hol_type -> hol_type -> thm -> term
   val mk_times_rule : string -> hol_type -> hol_type -> thm -> term
@@ -202,65 +202,65 @@ module Cll_terms: sig
 
 end = struct
 
-  let mk_id_proc tp chantp llid = 
+  let mk_id_proc prefix tp chantp llid = 
     let name_params = ["A";"x";"y";"m"] 
     and ty_params = [`:LinProp`;chantp;chantp;chantp] in
     let params = map mk_var (zip name_params ty_params) 
-    and oper = mk_var ("IdProc",itlist mk_fun_ty ty_params tp) in
+    and oper = mk_var (prefix ^ "IdProc",itlist mk_fun_ty ty_params tp) in
     let def_lhs = list_mk_comb (oper,params)
     and def_rhs = llid (el 0 params) (el 1 params) (el 2 params) (el 3 params) in
       mk_eq (def_lhs,def_rhs)
 
-  let mk_times_proc tp chantp lltimes =   
+  let mk_times_proc prefix tp chantp lltimes =   
     let name_params = ["A";"B";"z";"x";"y";"P";"Q"] 
     and ty_params = [`:LinProp`;`:LinProp`;chantp;chantp;chantp;tp;tp] in
     let params = map mk_var (zip name_params ty_params) 
-    and oper = mk_var ("TimesProc",itlist mk_fun_ty ty_params tp) in
+    and oper = mk_var (prefix ^ "TimesProc",itlist mk_fun_ty ty_params tp) in
     let def_lhs = list_mk_comb (oper,params)
     and def_rhs = lltimes (el 0 params) (el 1 params) (el 2 params) (el 3 params) (el 4 params) (el 5 params) (el 6 params) in
       mk_eq (def_lhs,def_rhs)
 
-  let mk_par_proc tp chantp llpar =   
+  let mk_par_proc prefix tp chantp llpar =   
     let name_params = ["A";"B";"z";"x";"y";"P"] 
     and ty_params = [`:LinProp`;`:LinProp`;chantp;chantp;chantp;tp] in
     let params = map mk_var (zip name_params ty_params) 
-    and oper = mk_var ("ParProc",itlist mk_fun_ty ty_params tp) in
+    and oper = mk_var (prefix ^ "ParProc",itlist mk_fun_ty ty_params tp) in
     let def_lhs = list_mk_comb (oper,params)
     and def_rhs = llpar (el 0 params) (el 1 params) (el 2 params) (el 3 params) (el 4 params) (el 5 params) in
       mk_eq (def_lhs,def_rhs)
 
-  let mk_with_proc tp chantp llwith =   
+  let mk_with_proc prefix tp chantp llwith =   
     let name_params = ["A";"B";"z";"x";"y";"u";"v";"P";"Q"] 
     and ty_params = [`:LinProp`;`:LinProp`;chantp;chantp;chantp;chantp;chantp;tp;tp] in
     let params = map mk_var (zip name_params ty_params) 
-    and oper = mk_var ("WithProc",itlist mk_fun_ty ty_params tp) in
+    and oper = mk_var (prefix ^ "WithProc",itlist mk_fun_ty ty_params tp) in
     let def_lhs = list_mk_comb (oper,params)
     and def_rhs = llwith (el 0 params) (el 1 params) (el 2 params) (el 3 params) (el 4 params) (el 5 params) (el 6 params) (el 7 params) (el 8 params) in
       mk_eq (def_lhs,def_rhs)
 
-  let mk_plusL_proc tp chantp llplusL =   
+  let mk_plusL_proc prefix tp chantp llplusL =   
     let name_params = ["A";"B";"z";"x";"u";"v";"P"] 
     and ty_params = [`:LinProp`;`:LinProp`;chantp;chantp;chantp;chantp;tp] in
     let params = map mk_var (zip name_params ty_params) 
-    and oper = mk_var ("PlusLProc",itlist mk_fun_ty ty_params tp) in
+    and oper = mk_var (prefix ^ "PlusLProc",itlist mk_fun_ty ty_params tp) in
     let def_lhs = list_mk_comb (oper,params)
     and def_rhs = llplusL (el 0 params) (el 1 params) (el 2 params) (el 3 params) (el 4 params) (el 5 params) (el 6 params) in
       mk_eq (def_lhs,def_rhs)
 
-  let mk_plusR_proc tp chantp llplusR =   
+  let mk_plusR_proc prefix tp chantp llplusR =   
     let name_params = ["A";"B";"z";"y";"u";"v";"Q"] 
     and ty_params = [`:LinProp`;`:LinProp`;chantp;chantp;chantp;chantp;tp] in
     let params = map mk_var (zip name_params ty_params) 
-    and oper = mk_var ("PlusRProc",itlist mk_fun_ty ty_params tp) in
+    and oper = mk_var (prefix ^ "PlusRProc",itlist mk_fun_ty ty_params tp) in
     let def_lhs = list_mk_comb (oper,params)
     and def_rhs = llplusR (el 0 params) (el 1 params) (el 2 params) (el 3 params) (el 4 params) (el 5 params) (el 6 params) in
       mk_eq (def_lhs,def_rhs)
 
-  let mk_cut_proc tp chantp llcut =   
+  let mk_cut_proc prefix tp chantp llcut =   
     let name_params = ["C";"z";"x";"y";"P";"Q"] 
     and ty_params = [`:LinProp`;chantp;chantp;chantp;tp;tp] in
     let params = map mk_var (zip name_params ty_params) 
-    and oper = mk_var ("CutProc",itlist mk_fun_ty ty_params tp) in
+    and oper = mk_var (prefix ^ "CutProc",itlist mk_fun_ty ty_params tp) in
     let def_lhs = list_mk_comb (oper,params)
     and def_rhs = llcut (el 0 params) (el 1 params) (el 2 params) (el 3 params) (el 4 params) (el 5 params) in
       mk_eq (def_lhs,def_rhs)
