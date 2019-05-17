@@ -158,20 +158,23 @@ module Cll_json =
 
   let from_actionstate (st:Actionstate.t) =
     Object [
-    ("ctr", Int st.Actionstate.ctr);
-    ("buffered", Array (map from_linprop st.Actionstate.buffered));
-    ("joined", Array (map from_linterm st.Actionstate.joined));
-    ("iprov", Array (map from_iprov_entry st.Actionstate.iprov));
-    ("prov", Array (map from_prov_entry st.Actionstate.prov))]
-	   
+        ("label", String st.Actionstate.label);
+        ("ctr", Int st.Actionstate.ctr);
+        ("buffered", Array (map from_linprop st.Actionstate.buffered));
+        ("joined", Array (map from_linterm st.Actionstate.joined));
+        ("iprov", Array (map from_iprov_entry st.Actionstate.iprov));
+        ("prov", Array (map from_prov_entry st.Actionstate.prov))]
+	
   let to_actionstate to_chan j =
     let tbl = make_table (objekt j) in
-    let ctr = int (field tbl "ctr")
+    let label = string (field tbl "label")
+    and ctr = int (field tbl "ctr")
     and buffered = list to_linprop (field tbl "buffered") 
     and joined = list (to_linterm to_chan) (field tbl "joined")
     and iprov = list to_iprov_entry (field tbl "iprov")
     and prov = list to_prov_entry (field tbl "prov") in
-    ({ Actionstate.ctr = ctr ;
+    ({ Actionstate.label = label ;
+       Actionstate.ctr = ctr ;
        Actionstate.metas = [] ;
        Actionstate.buffered = buffered ;
        Actionstate.joined = joined ;

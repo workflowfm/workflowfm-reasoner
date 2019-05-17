@@ -42,18 +42,24 @@ module Actionmap = Map.Make(String);;
 
 module Actionstate = struct
   type t = {
-    ctr : int;
-    metas : term list;
-    buffered : term list;
-    joined : term list;
-    iprov : (term * provtree) list;
-    prov : (string * provtree) list;
-  }
+      label : string;
+      ctr : int;
+      metas : term list;
+      buffered : term list;
+      joined : term list;
+      iprov : (term * provtree) list;
+      prov : (string * provtree) list;
+    }
 	   
-  let create ctr = ({ ctr = ctr ; metas = [] ; buffered = [] ; joined = [] ; iprov = [] ; prov = [] }:t)
+  let create lbl ctr = ({ label = lbl ; ctr = ctr ; metas = [] ; buffered = [] ; joined = [] ; iprov = [] ; prov = [] }:t)
 
   let reset s = ({ s with buffered = [] ; joined = [] }:t)
-    
+
+  let label s = s.label
+		   
+  let set_label l s =
+    ({ s with label = l }:t)   
+   
   let ctr s = s.ctr
 		   
   let set_ctr c s =
@@ -62,10 +68,10 @@ module Actionstate = struct
   let set_metas l s =
     ({ s with metas = l }:t)
 
-  let from_seqstate (i,m) s = 
-    ({ s with ctr = i ; metas = m }:t)
+  let from_seqstate (l,i,m) s = 
+    ({ s with label = l ; ctr = i ; metas = m }:t)
 
-  let to_seqstate s = (s.ctr,s.metas)
+  let to_seqstate s = (s.label,s.ctr,s.metas)
 
   let inc i s = set_ctr (s.ctr + i) s
  	      
@@ -97,6 +103,8 @@ module Actionstate = struct
  in
     print_string "-----";
     print_newline ();
+    print_string ("Label = " ^ st.label);
+    print_newline ();
     print_string ("Ctr = " ^ (string_of_int st.ctr));
     print_newline ();
     print_string ("Metas = " ^ (stml st.metas));
@@ -116,7 +124,7 @@ module Actionstate = struct
     print_newline()
 		  
   let (TAC:t etactic -> tactic) =
-    fun atac -> ETAC_TAC' print (create (-1)) atac
+    fun atac -> ETAC_TAC' print (create "" (-1)) atac
 
   let (CLL_TAC:seqtactic -> t etactic) =
     fun tac -> LIFT_ETAC to_seqstate from_seqstate tac
