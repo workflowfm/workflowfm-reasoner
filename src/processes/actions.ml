@@ -4,7 +4,7 @@
 (*                            Petros Papapanagiotou                          *)
 (*              Center of Intelligent Systems and their Applications         *)
 (*                           University of Edinburgh                         *)
-(*                                 2011 - 2017                               *)
+(*                                 2011 - 2019                               *)
 (* ========================================================================= *)
 
 (* Dependencies *)
@@ -162,6 +162,24 @@ module Actionstate = struct
 		       s) in
       ALL_ETAC' update
 
+  let (SET_CTR_TAC: int -> t etactic) =
+    fun c -> ALL_ETAC' (fun s -> set_ctr c s)
+
+  let (SET_LABEL_TAC: string -> t etactic) =
+    fun l -> ALL_ETAC' (fun s -> set_label l s)
+
+  let (UPDATE_LABEL_TAC: (string -> string) -> t etactic) =
+    fun f s ->  SET_LABEL_TAC (f s.label) s
+
+  let (TEMP_LABEL_THEN: (string -> string) -> t etactic -> t etactic) =
+    fun f tac s -> EEVERY [
+                       SET_CTR_TAC 0 ;
+                       UPDATE_LABEL_TAC f ;
+                       tac ;
+                       SET_LABEL_TAC s.label ; 
+                       SET_CTR_TAC s.ctr
+                     ] s
+			     
 end;;		   
 
 type astactic = Actionstate.t etactic;;
@@ -231,20 +249,23 @@ module Action = struct
 
   let apply: t -> astactic =
     fun act s gl ->
-      let tac s (asl,w as gl) =
-	let name = String.uppercase act.act in
-	let atac = get name
-	and thml = try ( assoc act.larg asl )
-	  with Failure _ -> failwith ("APPLY ACTION '"^name^"': No such process '"^act.larg^"'")
-	and thmr = try ( assoc act.rarg asl )
-	  with Failure _ -> failwith ("APPLY ACTION '"^name^"': No such process '"^act.rarg^"'") in
-	atac act thml thmr s gl in
-      
-      EEVERY [
-(*	ETRY (REFRESH_CHANS_TAC act.rarg);
-	ETRY (REFRESH_CHANS_TAC act.larg); *)	
-	tac
-    ] s gl
+    let tac s (asl,w as gl) =
+	  let name = String.uppercase act.act in
+	  let atac = get name
+	  and thml = try ( assoc act.larg asl )
+	             with Failure _ -> failwith ("APPLY ACTION '"^name^"': No such process '"^act.larg^"'")
+	  and thmr = try ( assoc act.rarg asl )
+	             with Failure _ -> failwith ("APPLY ACTION '"^name^"': No such process '"^act.rarg^"'") in
+	  atac act thml thmr s gl in
+    
+    let temp_label l = 
+      if (l = "") then act.res else String.concat "__" [l;act.res;""] in
+
+    EEVERY [
+        (*	ETRY (REFRESH_CHANS_TAC act.rarg);
+	        ETRY (REFRESH_CHANS_TAC act.larg); *)	
+	    Actionstate.TEMP_LABEL_THEN temp_label tac
+      ] s gl
     
  
 (*  let (TAC:t -> tactic) =
