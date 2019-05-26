@@ -41,7 +41,7 @@ module Json_composer_io =
   let execute_json j =
     try (
       let res = input j in
-      ignore (map print res)
+      ignore (map print res) ; res
     ) with e -> (except e ; raise e)
 
   let execute_file s = execute_json (Json_io.load_json s)
