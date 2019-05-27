@@ -4,7 +4,7 @@
 (*                            Petros Papapanagiotou                          *)
 (*              Center of Intelligent Systems and their Applications         *)
 (*                           University of Edinburgh                         *)
-(*                                 2011 - 2017                               *)
+(*                                 2011 - 2019                               *)
 (* ========================================================================= *)
 
 (* Dependencies *)
@@ -42,18 +42,24 @@ module Actionmap = Map.Make(String);;
 
 module Actionstate = struct
   type t = {
-    ctr : int;
-    metas : term list;
-    buffered : term list;
-    joined : term list;
-    iprov : (term * provtree) list;
-    prov : (string * provtree) list;
-  }
+      label : string;
+      ctr : int;
+      metas : term list;
+      buffered : term list;
+      joined : term list;
+      iprov : (term * provtree) list;
+      prov : (string * provtree) list;
+    }
 	   
-  let create ctr = ({ ctr = ctr ; metas = [] ; buffered = [] ; joined = [] ; iprov = [] ; prov = [] }:t)
+  let create lbl ctr = ({ label = lbl ; ctr = ctr ; metas = [] ; buffered = [] ; joined = [] ; iprov = [] ; prov = [] }:t)
 
   let reset s = ({ s with buffered = [] ; joined = [] }:t)
-    
+
+  let label s = s.label
+		   
+  let set_label l s =
+    ({ s with label = l }:t)   
+   
   let ctr s = s.ctr
 		   
   let set_ctr c s =
@@ -62,10 +68,10 @@ module Actionstate = struct
   let set_metas l s =
     ({ s with metas = l }:t)
 
-  let from_seqstate (i,m) s = 
-    ({ s with ctr = i ; metas = m }:t)
+  let from_seqstate (l,i,m) s = 
+    ({ s with label = l ; ctr = i ; metas = m }:t)
 
-  let to_seqstate s = (s.ctr,s.metas)
+  let to_seqstate s = (s.label,s.ctr,s.metas)
 
   let inc i s = set_ctr (s.ctr + i) s
  	      
@@ -97,6 +103,8 @@ module Actionstate = struct
  in
     print_string "-----";
     print_newline ();
+    print_string ("Label = " ^ st.label);
+    print_newline ();
     print_string ("Ctr = " ^ (string_of_int st.ctr));
     print_newline ();
     print_string ("Metas = " ^ (stml st.metas));
@@ -116,7 +124,7 @@ module Actionstate = struct
     print_newline()
 		  
   let (TAC:t etactic -> tactic) =
-    fun atac -> ETAC_TAC' print (create (-1)) atac
+    fun atac -> ETAC_TAC' print (create "" (-1)) atac
 
   let (CLL_TAC:seqtactic -> t etactic) =
     fun tac -> LIFT_ETAC to_seqstate from_seqstate tac
@@ -154,6 +162,24 @@ module Actionstate = struct
 		       s) in
       ALL_ETAC' update
 
+  let (SET_CTR_TAC: int -> t etactic) =
+    fun c -> ALL_ETAC' (fun s -> set_ctr c s)
+
+  let (SET_LABEL_TAC: string -> t etactic) =
+    fun l -> ALL_ETAC' (fun s -> set_label l s)
+
+  let (UPDATE_LABEL_TAC: (string -> string) -> t etactic) =
+    fun f s ->  SET_LABEL_TAC (f s.label) s
+
+  let (TEMP_LABEL_THEN: (string -> string) -> t etactic -> t etactic) =
+    fun f tac s -> EEVERY [
+                       SET_CTR_TAC 0 ;
+                       UPDATE_LABEL_TAC f ;
+                       tac ;
+                       SET_LABEL_TAC s.label ; 
+                       SET_CTR_TAC s.ctr
+                     ] s
+			     
 end;;		   
 
 type astactic = Actionstate.t etactic;;
@@ -223,20 +249,23 @@ module Action = struct
 
   let apply: t -> astactic =
     fun act s gl ->
-      let tac s (asl,w as gl) =
-	let name = String.uppercase act.act in
-	let atac = get name
-	and thml = try ( assoc act.larg asl )
-	  with Failure _ -> failwith ("APPLY ACTION '"^name^"': No such process '"^act.larg^"'")
-	and thmr = try ( assoc act.rarg asl )
-	  with Failure _ -> failwith ("APPLY ACTION '"^name^"': No such process '"^act.rarg^"'") in
-	atac act thml thmr s gl in
-      
-      EEVERY [
-(*	ETRY (REFRESH_CHANS_TAC act.rarg);
-	ETRY (REFRESH_CHANS_TAC act.larg); *)	
-	tac
-    ] s gl
+    let tac s (asl,w as gl) =
+	  let name = String.uppercase act.act in
+	  let atac = get name
+	  and thml = try ( assoc act.larg asl )
+	             with Failure _ -> failwith ("APPLY ACTION '"^name^"': No such process '"^act.larg^"'")
+	  and thmr = try ( assoc act.rarg asl )
+	             with Failure _ -> failwith ("APPLY ACTION '"^name^"': No such process '"^act.rarg^"'") in
+	  atac act thml thmr s gl in
+    
+    let temp_label l = 
+      if (l = "") then act.res else String.concat "__" [l;act.res;""] in
+
+    EEVERY [
+        (*	ETRY (REFRESH_CHANS_TAC act.rarg);
+	        ETRY (REFRESH_CHANS_TAC act.larg); *)	
+	    Actionstate.TEMP_LABEL_THEN temp_label tac
+      ] s gl
     
  
 (*  let (TAC:t -> tactic) =
