@@ -261,13 +261,13 @@ let (process_of_asm:string -> goalstack -> term) =
 (* ------------------------------------------------------------------------- *)
 
 let llcut_tac =
-  fun setlist thm (i,metas) ->
+  fun setlist thm (lbl,i,metas) ->
     let thm = (UNDISCH_ALL o MIMP_TO_IMP_RULE o SPEC_ALL) thm in
     let primed_ll_cut = inst_meta_rule_vars [] (mk_meta_rule ll_cut) (thm_frees thm) in
     let cut_term = (hd o tl o hyp o thd3) primed_ll_cut in
     let cut_ins = seq_match (thm_frees thm) metas cut_term (concl thm) in
     let new_rule = inst_meta_rule (cut_ins) primed_ll_cut in
-    apply_seqtac rulem_seqtac setlist new_rule (i,metas)
+    apply_seqtac rulem_seqtac setlist new_rule (lbl,i,metas)
 
 
 (*
