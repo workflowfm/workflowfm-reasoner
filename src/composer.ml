@@ -11,8 +11,37 @@ needs (!serv_dir ^ "CLL/CLL.ml");;
 needs (!serv_dir ^ "processes/actions.ml");;
 needs (!serv_dir ^ "processes/processes.ml");;
 
-module Composer (Process:Process_type) =
+module type Composer_type = 
+  sig
+    module Process : Process_type
+    module Command :
+      sig
+        type t =
+          | Ping of float
+          | Create of string * term list * term
+          | Compose1 of Process.t * Process.t * Action.t * Actionstate.t
+          | Compose of string * Process.t list * Action.t list * Actionstate.t
+          | Verify of string * Process.t list * Action.t list * Actionstate.t
+        val name : t -> string
+      end
+    module Response :
+      sig
+        type t = (* TODO: Deployment responses *)
+          | Ping of float
+          | Create of Process.t
+          | Compose of Process.t * Action.t * Actionstate.t
+          | Verify of Process.t
+          | Failed of string
+          | Exception of string 
+        val name : t -> string
+      end
+    val except : exn -> Response.t
+    val execute : Command.t -> Response.t list
+  end;;
+
+module Composer_make (Process:Process_type): Composer_type =
   struct
+    module Process:Process_type = Process
     module Command =
       struct
         (* TODO deployment commands: 
@@ -87,7 +116,7 @@ Json_command.add "pilibstateful" Json_pilib.scaldeploystateful;;
 end ;;
 
 (* (* Testing:*)
-module Comp = Composer(Proc);;
+module Composer = Composer_make(Proc);;
 let myst = Actionstate.create "TEST" 0;;
 let rec add_provs procs st =
     match procs with
@@ -108,3 +137,49 @@ Comp.execute (Compose ("R2",[p1;p2;p3],[myact1;myact2],add_provs[p1;p2;p3] myst)
 Comp.execute (Verify ("R2",[p1;p2;p3],[myact1;myact2],add_provs[p1;p2;p3] myst));;
 Comp.execute (Compose1 (p1,p2,myactEX,add_provs[p1;p2] myst));;
 *)
+
+
+module type Codec_type =
+  sig
+    type t 
+    module Process : Process_type
+    module Encode :
+    sig
+      val prop : term -> t
+      val term : term -> t
+      val act : Action.t -> t
+      val prov : provtree -> t
+      val prov_entry : string * provtree -> t
+      val iprov_entry : term * provtree -> t
+      val actionstate : Actionstate.t -> t
+      val agent : term -> t
+      val iopair : term * term -> t
+      val process : Process.t -> t
+    end
+    module Decode :
+    sig
+      val prop : t -> term
+      val act : t -> Action.t
+      val prov : t -> provtree
+      val prov_entry : t -> string * provtree
+      val iprov_entry : t -> term * provtree
+      val term : t -> term
+      val actionstate : t -> Actionstate.t
+      val agent : t -> term
+      val iopair : t -> term * term
+      val process : t -> Process.t
+    end
+  end;;
+
+
+module type Composer_api =
+  sig
+    type t
+    module Composer : Composer_type
+    module Codec : Codec_type with type t = t and module Process = Composer.Process
+
+    val response : Composer.Response.t -> t
+    val command : t -> Composer.Command.t
+          
+  end;;
+					 			    
