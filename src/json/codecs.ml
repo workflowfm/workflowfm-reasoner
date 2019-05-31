@@ -218,8 +218,8 @@ module Json_proc_make (Process:Process_type) =
 						 
         let agent j = try (
                         let op,arg = (dest_comb o parse_term o string) j in
-                        let tm = mk_icomb (op,Proc.try_proc_type arg) in
-                        let tinst = (map (fun x -> Proc.chantp,x) o filter is_vartype o map type_of o frees) tm in
+                        let tm = mk_icomb (op,Process.try_proc_type arg) in
+                        let tinst = (map (fun x -> Process.chantp,x) o filter is_vartype o map type_of o frees) tm in
                         inst tinst tm
                       ) with Failure _ -> failwith "Json_composer.to_agent: failed to parse agent definition" 
         
@@ -250,11 +250,13 @@ module Json_proc_make (Process:Process_type) =
   end ;;
 
 
-module Json_codec (Composer:Composer_type) : Codec_type = 
+module Json_codec (Proc:Process_type) : Codec_type 
+       with type proc = Proc.t 
+        and type encodet = Json_type.json_type = 
   struct
-    type t = Json_type.json_type
-    module Process = Composer.Process
-    module Json_proc = Json_proc_make(Composer.Process)
+    type encodet = Json_type.json_type
+    type proc = Proc.t
+    module Json_proc = Json_proc_make(Proc)
     module Encode =
       struct
         include Json_cll.Encode
@@ -273,11 +275,10 @@ module Json_codec (Composer:Composer_type) : Codec_type =
 module Json_api_make (Composer:Composer_type) : Composer_api =
   struct
     open Json_type.Browse
-    type t = Json_type.json_type
-    module Composer:Composer_type = Composer
-    module Codec : Codec_type = Json_codec(Composer)
+    include Composer
+    include Json_codec(Process) 
 
-    let response (r:Composer.Response.t) = match r with
+    let response (r:Response.t) : encodet = match r with
           | Ping t -> 
              Object [
                  ("response", String "Pong");
@@ -287,21 +288,21 @@ module Json_api_make (Composer:Composer_type) : Composer_api =
           | Create p ->             
              Object [
                  ("response", String "CreateProcess");
-                 ("process", Codec.Encode.process p);
+                 ("process", Encode.process p);
                ]
 
           | Compose (p,act,state) ->   
              Object [
                  ("response", String "Compose");
-                 ("action", Codec.Encode.act act);
-                 ("process", Codec.Encode.process p);
-                 ("state", Codec.Encode.actionstate state);
+                 ("action", Encode.act act);
+                 ("process", Encode.process p);
+                 ("state", Encode.actionstate state);
                ]          
 
           | Verify p -> 
              Object [
                  ("response", String "Verify");
-                 ("process", Codec.Encode.process p)
+                 ("process", Encode.process p)
                ]
 
           | Failed s -> 
@@ -315,8 +316,39 @@ module Json_api_make (Composer:Composer_type) : Composer_api =
                  ("response", String "Exception");
                  ("content", String s)
                ]
-          
+       
+    let command (j:encodet) : Command.t = 
+      let tbl = make_table (objekt j) in
+      match string (field tbl "command") with
+        | "ping" ->
+           let time = float (field tbl "ping") in
+           Ping time
+
+        | "create" ->
+           let name = string (field tbl "name")
+           and inputs = list Decode.prop (field tbl "inputs")
+           and output = Decode.prop (field tbl "output") in
+           Create (name,inputs,output)
+
+        | "compose1" ->
+           let act = Decode.act (field tbl "action")
+           and lhs = Decode.process (field tbl "lhs")
+           and rhs = Decode.process (field tbl "rhs")
+           and state = Decode.actionstate (field tbl "state") in
+           Compose1 (lhs,rhs,act,state)
+
+        | "compose" ->
+           let name = string (field tbl "name")
+           and deps = list Decode.process (field tbl "components")
+           and acts = list Decode.act (field tbl "actions")
+           and state = Decode.actionstate (field tbl "state") in
+           Compose (name,deps,acts,state)
+
+        | "verify" ->
+           let name = string (field tbl "name")
+           and deps = list Decode.process (field tbl "components")
+           and acts = list Decode.act (field tbl "actions")
+           and state = Decode.actionstate (field tbl "state") in
+           Verify (name,deps,acts,state)
+
   end;;
-					 			    
-(* Error: This expression has type Composer.Process.t
-       but an expression was expected of type Codec.Process.t *)

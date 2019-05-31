@@ -39,9 +39,9 @@ module type Composer_type =
     val execute : Command.t -> Response.t list
   end;;
 
-module Composer_make (Process:Process_type): Composer_type =
+module Composer_make (Proc:Process_type): Composer_type with module Process = Proc =
   struct
-    module Process:Process_type = Process
+    module Process = Proc
     module Command =
       struct
         (* TODO deployment commands: 
@@ -141,45 +141,43 @@ Comp.execute (Compose1 (p1,p2,myactEX,add_provs[p1;p2] myst));;
 
 module type Codec_type =
   sig
-    type t 
-    module Process : Process_type
+    type encodet 
+    type proc
     module Encode :
     sig
-      val prop : term -> t
-      val term : term -> t
-      val act : Action.t -> t
-      val prov : provtree -> t
-      val prov_entry : string * provtree -> t
-      val iprov_entry : term * provtree -> t
-      val actionstate : Actionstate.t -> t
-      val agent : term -> t
-      val iopair : term * term -> t
-      val process : Process.t -> t
+      val prop : term -> encodet
+      val term : term -> encodet
+      val act : Action.t -> encodet
+      val prov : provtree -> encodet
+      val prov_entry : string * provtree -> encodet
+      val iprov_entry : term * provtree -> encodet
+      val actionstate : Actionstate.t -> encodet
+      val agent : term -> encodet
+      val iopair : term * term -> encodet
+      val process : proc -> encodet
     end
     module Decode :
     sig
-      val prop : t -> term
-      val act : t -> Action.t
-      val prov : t -> provtree
-      val prov_entry : t -> string * provtree
-      val iprov_entry : t -> term * provtree
-      val term : t -> term
-      val actionstate : t -> Actionstate.t
-      val agent : t -> term
-      val iopair : t -> term * term
-      val process : t -> Process.t
+      val prop : encodet -> term
+      val act : encodet -> Action.t
+      val prov : encodet -> provtree
+      val prov_entry : encodet -> string * provtree
+      val iprov_entry : encodet -> term * provtree
+      val term : encodet -> term
+      val actionstate : encodet -> Actionstate.t
+      val agent : encodet -> term
+      val iopair : encodet -> term * term
+      val process : encodet -> proc
     end
   end;;
 
 
 module type Composer_api =
   sig
-    type t
-    module Composer : Composer_type
-    module Codec : Codec_type with type t = t and module Process = Composer.Process
-
-    val response : Composer.Response.t -> t
-    val command : t -> Composer.Command.t
+    include Composer_type
+    include Codec_type with type proc = Process.t
+    val response : Response.t -> encodet
+    val command : encodet -> Command.t
           
   end;;
 					 			    

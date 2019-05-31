@@ -2130,3 +2130,67 @@ Xrules.ll_with_self;;
 
 (* Web stuff! *)
 
+module type Pr_type = 
+sig
+  type t
+  val string : t -> string
+end;;
+
+module type Interface_type =
+sig
+  module Pr : Pr_type
+  module Input :
+    sig
+      type t = 
+        | Inputa of Pr.t           
+        | Inputb of Pr.t           
+    end
+end;;
+
+module type Codec_type = 
+sig
+  type codet
+  type prt
+  val proc : prt -> codet
+end;;
+
+module type Api_type = 
+sig
+  include Interface_type
+  include Codec_type with type prt = Pr.t
+  val exe : Input.t -> codet 
+end;;
+
+module Pr : Pr_type =
+  struct
+    type t = int
+    let string = string_of_int
+end ;;
+
+module Interface (Proc : Pr_type) : Interface_type with module Pr = Proc =
+  struct
+    module Pr = Proc 
+    module Input =
+      struct
+        type t = 
+          | Inputa of Pr.t           
+          | Inputb of Pr.t           
+      end
+
+  end;;
+
+module Codec (Proc : Pr_type) : Codec_type with type prt = Proc.t =
+  struct
+    type codet = string
+    type prt = Proc.t
+    let proc p = Proc.string p
+ end;;
+
+module Api (Inter : Interface_type) =
+  struct
+    include Inter
+    include Codec(Inter.Pr)
+    let exe (x:Input.t) = match x with
+        | Inputa p -> proc p
+        | Inputb p -> proc p
+end;;
