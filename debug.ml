@@ -2116,7 +2116,32 @@ Xrules.ll_with_self;;
 (* ------------------------------------------------------------------------------------*)
 
 module Camp = Composer_make(Proc);;
+
 module Jamba = Json_api_make(Camp);;
 module Json_comms = Json_commands(Jamba);;
 Json_comms.load();;
 Jamba.Commands.names();;
+
+module Bak = Composer_console_make(Camp);;
+
+Bak.create "Pa" [`X`] `A ** B ** C` ;;
+Bak.create "Pb" [`A`] `D` ;;
+Bak.create "Pc" [`B`] `E` ;;
+Bak.create "Pd" [`C`] `F` ;;
+
+Bak.join "Pa" "lr" "Pb" "(NEG A)";;
+Bak.join "_Step0" "lrr" "Pc" "(NEG B)";;
+Bak.join "_Step1" "r" "Pd" "(NEG C)";;
+
+Bak.store "_Step2" "Res";;
+
+Bak.get "Res";;
+
+Bak.list();;
+Bak.ilist();;
+
+Bak.reset ();;
+Bak.ilist();;
+Bak.load "Res";;
+Bak.list();;
+Bak.ilist();;
