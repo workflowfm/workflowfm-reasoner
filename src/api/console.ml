@@ -1,12 +1,20 @@
-(* ========================================================================= *)
-(* An environment to perform and manage process composition on the toplevel. *)
-(*                                                                           *)
-(*                   Petros Papapanagiotou, Jacques Fleuriot                 *)
-(*                          University of Edinburgh                          *)
-(*                                     2018                                  *)
-(* ========================================================================= *)
+(* ========================================================================= 
+   An environment to use the Composer at the toplevel.
+   
+   Petros Papapanagiotou
+   Center of Intelligent Systems and their Applications         
+   School of Informatics, University of Edinburgh                         
+   2019
+ ========================================================================= *)
 
-needs (!serv_dir ^ "make.ml");;
+needs (!serv_dir ^ "api/api.ml");;
+
+(* TODO TODO *)
+module Composer_console_make (module Composer : Composer_type) =
+  struct
+    type t = { name : string; phone : string }
+           
+  end;;
 
 
 let current_state = ref (Actionstate.create 0);;

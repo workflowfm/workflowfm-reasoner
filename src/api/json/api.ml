@@ -7,9 +7,9 @@
    2019
  ========================================================================= *)
 
-needs (!serv_dir ^ "composer.ml");;
-needs (!serv_dir ^ "json/lib.ml");;
-needs (!serv_dir ^ "json/codecs.ml");;
+needs (!serv_dir ^ "api/api.ml");;
+needs (!serv_dir ^ "api/json/lib.ml");;
+needs (!serv_dir ^ "api/json/codecs.ml");;
 
 module type Composer_json_api = Composer_api with type encodet = Json_type.json_type;; 
 

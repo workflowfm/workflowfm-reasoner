@@ -10,8 +10,8 @@
 needs (!serv_dir ^ "CLL/CLL.ml");;
 needs (!serv_dir ^ "processes/actions.ml");;
 needs (!serv_dir ^ "processes/processes.ml");;
-needs (!serv_dir ^ "composer.ml");;
-needs (!serv_dir ^ "json/lib.ml");;
+needs (!serv_dir ^ "api/api.ml");;
+needs (!serv_dir ^ "api/json/lib.ml");;
 
 module Json_cll = 
   struct

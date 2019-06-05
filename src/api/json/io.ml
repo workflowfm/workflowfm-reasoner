@@ -1,15 +1,15 @@
 (* ========================================================================= *)
-(* JSON interface for external tools such as the composer GUI.               *)
+(* JSON Input/Output                                                         *)
 (*                                                                           *)
 (*                            Petros Papapanagiotou                          *)
 (*                           University of Edinburgh                         *)
-(*                                2015 - 2016                                *)
+(*                                2015 - 2019                                *)
 (* ========================================================================= *)
 
 needs (!serv_dir ^ "processes/actions.ml");;
 needs (!serv_dir ^ "processes/processes.ml");;
-needs (!serv_dir ^ "json/lib.ml");;
-needs (!serv_dir ^ "json/api.ml");;
+needs (!serv_dir ^ "api/json/lib.ml");;
+needs (!serv_dir ^ "api/json/api.ml");;
 
 module Json_composer_io_make (Api : Composer_json_api) = 
   struct
@@ -21,6 +21,8 @@ module Json_composer_io_make (Api : Composer_json_api) =
     print_string (Json_io.string_of_json j);
     print_string "\nJSON_END\n" 
 
+  let print_file s j = Json_io.save_json s j
+
   let execute_json j =
       let res = Api.execute j in
       ignore (map print res) ; res
@@ -29,3 +31,5 @@ module Json_composer_io_make (Api : Composer_json_api) =
   let execute s = execute_json (Json_io.json_of_string s)
 		
 end;;
+
+
