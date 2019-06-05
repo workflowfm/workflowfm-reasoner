@@ -32,9 +32,9 @@ module type Composer_type =
 
     val ping : float -> Response.t
     val create : string -> term list -> term -> Response.t
-    val compose1 : Process.t -> Process.t -> Action.t -> Actionstate.t -> Response.t
-    val compose : string -> Process.t list -> Action.t list -> Actionstate.t -> Response.t list
-    val verify : string -> Process.t list -> Action.t list -> Actionstate.t -> Response.t 
+    val compose1 : Process.t -> Process.t -> Action.t -> Response.t
+    val compose : string -> Process.t list -> Action.t list -> Response.t list
+    val verify : string -> Process.t list -> Action.t list -> Response.t 
     val except : exn -> Response.t
    end;;
 
@@ -88,26 +88,26 @@ module Composer_make (Proc:Process_type): Composer_type with module Process = Pr
         Create p 
       ) with e -> except e
 
-    let compose1 : Process.t -> Process.t -> Action.t -> Actionstate.t -> Response.t = 
-      fun lhs rhs action state ->
+    let compose1 : Process.t -> Process.t -> Action.t -> Response.t = 
+      fun lhs rhs action ->
       try (
-      let p,s = Process.compose1 action state lhs rhs in
+      let p,s = Process.compose1 action lhs rhs in
       Compose (p,action,s)
       ) with e -> except e
 
-    let compose : string -> Process.t list -> Action.t list -> Actionstate.t -> Response.t list =
-      fun name procs actions state -> 
+    let compose : string -> Process.t list -> Action.t list -> Response.t list =
+      fun name procs actions -> 
       try (
         if (actions = []) then [] else
-          let p,inters,s = Process.compose state name procs actions in
+          let p,inters,s = Process.compose name procs actions in
           let res (a,(s,p)) = Response.Compose (p,a,s) in
           map res (zip actions inters)                 
       ) with e -> [ except e ]
 
-    let verify : string -> Process.t list -> Action.t list -> Actionstate.t -> Response.t =
-      fun name procs actions state -> 
+    let verify : string -> Process.t list -> Action.t list -> Response.t =
+      fun name procs actions -> 
       try (
-        let p,_,_ = Process.compose state name procs actions in
+        let p,_,_ = Process.compose name procs actions in
         Verify p        
       ) with e -> except e
 

@@ -24,12 +24,6 @@ module Clltac = Clltactics(Cllpi);;
 module Proc = Process(Cllpi);;
 
 
-(* = Scala code extraction = *)
-
-loads (!serv_dir ^ "pap/pilib/pilib.ml");;
-loads (!serv_dir ^ "pap/pew.ml");;
-
-
 (* = Initialisation = *)
 
 Action.add "JOIN" Clltac.JOIN_TAC;;
@@ -49,11 +43,15 @@ loads (!serv_dir ^ "pap/piviz.ml");;
 
 module Piviz = Piviz_make(Proc);;
 
+(* = Scala code extraction = *)
+
+loads (!serv_dir ^ "pap/pilib/pilib.ml");;
+loads (!serv_dir ^ "pap/pew.ml");;
 
 
 (* = JSON interface = *)
 
-loads (!serv_dir ^ "json/make.ml");;
+loads (!serv_dir ^ "api/json/make.ml");;
 
 module Json_comp = Json_composer(Proc);;
 

@@ -19,7 +19,7 @@ module Json_api_make (Composer:Composer_type) : Composer_json_api =
     include Composer
     module Codec = Json_codec(Process) 
     include Codec
-    module Commands = Command_store_make(Codec)
+    module Commands = Command_store(Codec)
 
     let response (r:Response.t) : encodet = match r with
           | Ping t -> 
@@ -105,25 +105,22 @@ module Json_commands (Composer : Composer_json_api) =
       let tbl = make_table (objekt j) in
       let act = Decode.act (field tbl "action")
       and lhs = Decode.process (field tbl "lhs")
-      and rhs = Decode.process (field tbl "rhs")
-      and state = Decode.actionstate (field tbl "state") in
-      [ response (compose1 lhs rhs act state) ]
+      and rhs = Decode.process (field tbl "rhs") in
+      [ response (compose1 lhs rhs act) ]
 
     let compose j =
       let tbl = make_table (objekt j) in
       let name = string (field tbl "name")
       and deps = list Decode.process (field tbl "components")
-      and acts = list Decode.act (field tbl "actions")
-      and state = Decode.actionstate (field tbl "state") in
-      map response (compose name deps acts state)
+      and acts = list Decode.act (field tbl "actions") in
+      map response (compose name deps acts)
 
     let verify j =
       let tbl = make_table (objekt j) in
       let name = string (field tbl "name")
       and deps = list Decode.process (field tbl "components")
-      and acts = list Decode.act (field tbl "actions")
-      and state = Decode.actionstate (field tbl "state") in
-      [ response (verify name deps acts state) ]
+      and acts = list Decode.act (field tbl "actions") in
+      [ response (verify name deps acts) ]
         
     let load () = 
       (ignore o map (uncurry Commands.add)) [

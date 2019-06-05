@@ -160,15 +160,9 @@ let xx = Json_io.json_of_string "{\"action\":{\"act\":\"JOIN\",\"larg\":\"_Step1
 (* ============================================================================= *)
 (* ============================================================================= *)
 
-let myst = Actionstate.create "TEST" 0;;
-let rec add_provs procs st =
-    match procs with
-      | [] -> st
-      | p :: t ->
-	let n,prov = Proc.get_atomic_prov p in
-	add_provs t (Actionstate.add_prov n prov st);;
 let mycomp lbl procs acts =
-  let p,_,s = Proc.compose (add_provs procs myst) lbl procs acts in p,s;;
+  let p,_,s = Proc.compose lbl procs acts in p,s;;
+
 
 (* ============================================================================= *)
 (* ============================================================================= *)
@@ -221,8 +215,8 @@ let mypb = Proc.create "Pb" [`C`;`E`] `G` ;;
 let mypc = Proc.create "Pc" [`D`;`G`] `H` ;;
 let myact1 = Action.create "JOIN" "Pa" "l" "Pb" "(NEG C)" "Res";;
 let myact2 = Action.create "JOIN" "Res" "r" "Pc" "(NEG D)" "Rez";;
-Proc.compose myst "Res" [mypa;mypb;mypc] [myact1];;
-Proc.compose myst "Rez" [mypa;mypb;mypc] [myact1;myact2];;
+Proc.compose "Res" [mypa;mypb;mypc] [myact1];;
+Proc.compose "Rez" [mypa;mypb;mypc] [myact1;myact2];;
 (* xxx Provenance? *)
 
 let mypa = Proc.create "Pa" [`A`;`B`] `C ** D` ;;
@@ -2004,15 +1998,8 @@ SIMP_CONV [] `b + 1 = a ==> a = x +1 ` ;;
 let mypa = Proc.create "Pa" [`A ++ C`;`B ++ (D ** E)`] `C ** (G ++ H)` ;;
 let mypb = Proc.create "Pb" [`A`;`B`] `C ++ D` ;;
 
-let myst = Actionstate.create 0;;
-let rec add_provs procs st =
-    match procs with
-      | [] -> st
-      | p :: t ->
-	let n,prov = Proc.get_atomic_prov p in
-	add_provs t (Actionstate.add_prov n prov st);;
 let mycomp lbl procs acts =
-  let p,_,s = Proc.compose (add_provs procs myst) lbl procs acts in p,s;;
+  let p,_,s = Proc.compose lbl procs acts in p,s;;
 
 (* ============================================================================= *)
 (* ============================================================================= *)

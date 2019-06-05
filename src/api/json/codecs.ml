@@ -204,6 +204,7 @@ module Json_proc_make (Process:Process_type) =
               ("name", String p.Process.name);
               ("inputs", Array (map iopair p.Process.inputs));
               ("output", iopair p.Process.output);
+              ("prov", Json_act.Encode.prov p.Process.prov);
               ("proc", agent p.Process.proc);
               ("actions", Array (map Json_act.Encode.act p.Process.actions));
               ("copier", Bool p.Process.copier);
@@ -234,6 +235,7 @@ module Json_proc_make (Process:Process_type) =
           let name = string (field tbl "name")
           and inputs = list iopair (field tbl "inputs")
           and output = iopair (field tbl "output")
+          and prov = Json_act.Decode.prov (field tbl "prov")
           and proc = agent (field tbl "proc")
           and actions = list Json_act.Decode.act (field tbl "actions")
           and copier = bool (field tbl "copier")
@@ -241,6 +243,7 @@ module Json_proc_make (Process:Process_type) =
           ({Process.name = name; 
             Process.inputs = inputs ;
             Process.output = output ;
+            Process.prov = prov ;
             Process.proc = proc ;
             Process.actions = actions ;
             Process.copier = copier ;

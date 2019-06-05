@@ -9,10 +9,9 @@
 
 needs (!serv_dir ^ "api/api.ml");;
 
-(* TODO TODO *)
 module Composer_console_make (module Composer : Composer_type) =
   struct
-    type t = { name : string; phone : string }
+    
            
   end;;
 
