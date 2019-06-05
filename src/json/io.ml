@@ -9,40 +9,21 @@
 needs (!serv_dir ^ "processes/actions.ml");;
 needs (!serv_dir ^ "processes/processes.ml");;
 needs (!serv_dir ^ "json/lib.ml");;
-needs (!serv_dir ^ "json/commands.ml");;
+needs (!serv_dir ^ "json/api.ml");;
 
-module Json_composer_io = 
+module Json_composer_io_make (Api : Composer_json_api) = 
   struct
-  open Json_type.Browse
-       
+  open Json_type.Browse 
+  module Api = Api
+
   let print j =
     print_string "\nJSON_START\n";
     print_string (Json_io.string_of_json j);
-    print_string "\nJSON_END\n"
-	       
-  let string_result s = (Object [("result", String s)])
-
-  let except e =
-    let a,s = match e with
-      | Failure f -> "CommandFailed",f
-      | _ -> "Exception",Printexc.to_string e in
-    (print
-     (Object [
-      ("response", String a);
-      ("content", String s)]))
-  
-  let exec_fun f = try f () with e -> (except e ; raise e)
-
-  let input j =
-    let tbl = make_table (objekt j) in
-    let name = string (field tbl "command") in
-    (Json_command.get name) j
+    print_string "\nJSON_END\n" 
 
   let execute_json j =
-    try (
-      let res = input j in
+      let res = Api.execute j in
       ignore (map print res) ; res
-    ) with e -> (except e ; raise e)
 
   let execute_file s = execute_json (Json_io.load_json s)
   let execute s = execute_json (Json_io.json_of_string s)

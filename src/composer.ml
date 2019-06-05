@@ -14,66 +14,41 @@ needs (!serv_dir ^ "processes/processes.ml");;
 module type Composer_type = 
   sig
     module Process : Process_type
-    module Command :
-      sig
-        type t =
-          | Ping of float
-          | Create of string * term list * term
-          | Compose1 of Process.t * Process.t * Action.t * Actionstate.t
-          | Compose of string * Process.t list * Action.t list * Actionstate.t
-          | Verify of string * Process.t list * Action.t list * Actionstate.t
-        val name : t -> string
-      end
+
     module Response :
       sig
-        type t = (* TODO: Deployment responses *)
+        type t = 
           | Ping of float
           | Create of Process.t
           | Compose of Process.t * Action.t * Actionstate.t
           | Verify of Process.t
+          | Deploy of string * (string * string * bool) list (* Path, Content, Overwrite *)
           | Failed of string
           | Exception of string 
         val name : t -> string
+        val failed : t -> bool
       end
+
+    val ping : float -> Response.t
+    val create : string -> term list -> term -> Response.t
+    val compose1 : Process.t -> Process.t -> Action.t -> Actionstate.t -> Response.t
+    val compose : string -> Process.t list -> Action.t list -> Actionstate.t -> Response.t list
+    val verify : string -> Process.t list -> Action.t list -> Actionstate.t -> Response.t 
     val except : exn -> Response.t
-    val execute : Command.t -> Response.t list
-  end;;
+   end;;
 
 module Composer_make (Proc:Process_type): Composer_type with module Process = Proc =
   struct
     module Process = Proc
-    module Command =
-      struct
-        (* TODO deployment commands: 
-let piviz_deploy p ds = ["result",Piviz.deploy p ds] in
-    Json_command.add "piviz" (Json_comp.deploy "PiViz" piviz_deploy);;
-
-Json_command.add "pilib" Json_pilib.scaldeploy;;
-Json_command.add "pilibstateful" Json_pilib.scaldeploystateful;;
-
-         *)
-        type t =
-          | Ping of float
-          | Create of string * term list * term
-          | Compose1 of Process.t * Process.t * Action.t * Actionstate.t
-          | Compose of string * Process.t list * Action.t list * Actionstate.t
-          | Verify of string * Process.t list * Action.t list * Actionstate.t
-
-        let name c = match c with
-          | Ping _ -> "Ping"
-          | Create _ -> "CreateProcess"
-          | Compose1 _ -> "Compose1"
-          | Compose _ -> "Compose"
-          | Verify _ -> "Verify"
-      end
 
     module Response =
       struct
-        type t = (* TODO: Deployment responses *)
+        type t = 
           | Ping of float
           | Create of Process.t
           | Compose of Process.t * Action.t * Actionstate.t
           | Verify of Process.t
+          | Deploy of string * (string * string * bool) list
           | Failed of string
           | Exception of string 
 
@@ -82,41 +57,63 @@ Json_command.add "pilibstateful" Json_pilib.scaldeploystateful;;
           | Compose _ -> "Compose"
           | Create _ -> "CreateProcess"
           | Verify _ -> "Verify"
+          | Deploy (n,_) -> n ^ "Deploy"
           | Failed _ -> "CommandFailed"
           | Exception _ -> "Exception" 
+
+        let failed r = match r with
+          | Ping _ -> false
+          | Compose _ -> false
+          | Create _ -> false
+          | Verify _ -> false
+          | Deploy _ -> false
+          | Failed _ -> true
+          | Exception _ -> true
+
       end
 
     let except : exn -> Response.t = 
       fun e -> match e with
                | Failure f -> Failed f
                | _ -> Exception (Printexc.to_string e)
-      
-    let execute : Command.t -> Response.t list =
-      fun c -> try ( match c with
-               | Ping t -> [ Ping t ]
 
-               | Create (name,inputs,output) -> 
-                  let p = Process.create name inputs output in
-                  [ Create p ]
+    let ping : float -> Response.t =
+      fun t -> Ping t
 
-               | Compose1 (lhs,rhs,action,state) -> 
-                  let p,s = Process.compose1 action state lhs rhs in
-                  [ Compose (p,action,s) ]
+    let create : string -> term list -> term -> Response.t =
+      fun name inputs output -> 
+      try (
+        let p = Process.create name inputs output in
+        Create p 
+      ) with e -> except e
 
-               | Compose (name,procs,actions,state) ->
-                  if (actions = []) then [] else
-                    let p,inters,s = Process.compose state name procs actions in
-                    let res (a,(s,p)) = Response.Compose (p,a,s) in
-                    map res (zip actions inters)                 
+    let compose1 : Process.t -> Process.t -> Action.t -> Actionstate.t -> Response.t = 
+      fun lhs rhs action state ->
+      try (
+      let p,s = Process.compose1 action state lhs rhs in
+      Compose (p,action,s)
+      ) with e -> except e
 
-               | Verify (name,procs,actions,state) ->
-                  let p,_,_ = Process.compose state name procs actions in
-                  [ Verify p ]
-                   ) with e -> [ except e ]
+    let compose : string -> Process.t list -> Action.t list -> Actionstate.t -> Response.t list =
+      fun name procs actions state -> 
+      try (
+        if (actions = []) then [] else
+          let p,inters,s = Process.compose state name procs actions in
+          let res (a,(s,p)) = Response.Compose (p,a,s) in
+          map res (zip actions inters)                 
+      ) with e -> [ except e ]
+
+    let verify : string -> Process.t list -> Action.t list -> Actionstate.t -> Response.t =
+      fun name procs actions state -> 
+      try (
+        let p,_,_ = Process.compose state name procs actions in
+        Verify p        
+      ) with e -> except e
+
 end ;;
 
-(* (* Testing:*)
-module Composer = Composer_make(Proc);;
+(*(* Testing:*)
+module Comp = Composer_make(Proc);;
 let myst = Actionstate.create "TEST" 0;;
 let rec add_provs procs st =
     match procs with
@@ -125,17 +122,17 @@ let rec add_provs procs st =
 	let n,prov = Proc.get_atomic_prov p in
 	add_provs t (Actionstate.add_prov n prov st);;
 
-Comp.execute (Ping 0.1);;
-let [Comp.Response.Create p1] = Comp.execute (Create ("Hi1",[`A`;`B`],`C`));;
-let [Comp.Response.Create p2] = Comp.execute (Create ("Hi2",[`C`;`D`],`E`));;
-let [Comp.Response.Create p3] = Comp.execute (Create ("Hi3",[`E`;`F`],`G`));;
+Comp.ping 0.1;;
+let Comp.Response.Create p1 = Comp.create "Hi1" [`A`;`B`] `C` ;;
+let Comp.Response.Create p2 = Comp.create "Hi2" [`C`;`D`] `E` ;;
+let Comp.Response.Create p3 = Comp.create "Hi3" [`E`;`F`] `G` ;;
 let myact1 = Action.create "JOIN" "Hi1" "" "Hi2" "(NEG C)" "R1";;
 let myact2 = Action.create "JOIN" "R1" "" "Hi3" "(NEG E)" "R2";;
 let myactEX = Action.create "JOIN" "Hi1" "" "Hi2" "(NEG E)" "R";;
-Comp.execute (Compose1 (p1,p2,myact1,add_provs[p1;p2] myst));;
-Comp.execute (Compose ("R2",[p1;p2;p3],[myact1;myact2],add_provs[p1;p2;p3] myst));;
-Comp.execute (Verify ("R2",[p1;p2;p3],[myact1;myact2],add_provs[p1;p2;p3] myst));;
-Comp.execute (Compose1 (p1,p2,myactEX,add_provs[p1;p2] myst));;
+Comp.compose1 p1 p2 myact1 (add_provs[p1;p2] myst);;
+Comp.compose "R2" [p1;p2;p3] [myact1;myact2] (add_provs[p1;p2;p3] myst);;
+Comp.verify "R2" [p1;p2;p3] [myact1;myact2] (add_provs[p1;p2;p3] myst);;
+Comp.compose1 p1 p2 myactEX (add_provs[p1;p2] myst);;
 *)
 
 
@@ -171,13 +168,48 @@ module type Codec_type =
     end
   end;;
 
+module type Command_store_type =
+  sig
+    type encodet
+    val get_all : unit -> (encodet -> encodet list) list
+    val names : unit -> string list
+    val get : string -> encodet -> encodet list
+    val delete : string -> unit
+    val add : string -> (encodet -> encodet list) -> unit
+  end;;
+
+module Command_store ( Codec : Codec_type ) : Command_store_type with type encodet = Codec.encodet = 
+  struct
+    type encodet = Codec.encodet
+    module Commandmap = Map.Make(String)
+
+    let commands = ref Commandmap.empty;;
+	
+    let get_all () = Commandmap.fold (fun k v l -> (v::l)) (!commands) []
+                   
+    let names () = Commandmap.fold (fun k v l -> (k::l)) (!commands) []
+                 
+    let get name = try ( Commandmap.find (String.lowercase name) (!commands) )
+		           with Not_found -> failwith ("No such command '" ^ name ^ "'")
+
+    let delete name = commands := Commandmap.remove name (!commands)
+                    
+    let (add:Commandmap.key->(Codec.encodet -> Codec.encodet list)->unit) =
+      fun name cmd ->
+      let name = String.lowercase name in 
+      warn (try (let _ = get name in true) with Failure _ -> false)
+	    ("Command.add: Overwriting command '" ^ name ^ "'.") ;
+      commands := Commandmap.add name cmd (!commands)
+
+end;;
 
 module type Composer_api =
   sig
     include Composer_type
     include Codec_type with type proc = Process.t
-    val response : Response.t -> encodet
-    val command : encodet -> Command.t
-          
+    module Commands : Command_store_type with type encodet = encodet
+
+    val response : Response.t -> encodet 
+    val execute : encodet -> encodet list
   end;;
 					 			    
