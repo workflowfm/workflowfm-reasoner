@@ -21,3 +21,12 @@ loads (!serv_dir ^ "api/console.ml");;
 module Console = Composer_console_make(Composer);;
 
 open Console;;
+
+
+(* = JSON output (optional) = *)
+
+loads (!serv_dir ^ "api/json/console.ml");;
+
+module Json_console = Json_console_make(Console);;
+
+open Json_console;;
