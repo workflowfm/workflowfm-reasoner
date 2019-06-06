@@ -2174,3 +2174,5 @@ ilist();;
 load "Res";;
 list();;
 ilist();;
+
+Json_composer_io.execute "{\"command\":\"ping\",\"ping\":0.2}";;

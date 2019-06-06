@@ -209,6 +209,15 @@ module Pew_make (Composer : Composer_type) =
                (itlist (^) (map scala_typedec all_types) "\n") ^
                  "}")
 
+    let java_runner separator path package project name =
+      (java_file_path separator path package ((String.capitalize name)^"Runner"),
+       "package " ^ package ^ ";\n\n" ^
+         "public class " ^ (String.capitalize name) ^ "Runner {" ^ (nltab 1) ^
+           "public static void main(String[] args) {" ^ (nltab 2) ^
+             (String.capitalize name)^"Main.main(args);" ^ (nltab 1) ^
+               "}" ^ (nltab 0) ^
+                 "}")
+
     let scala_stateful_deploy separator path package project main java proc deps =
       let is_atomic x = x.Proc.actions == [] in
       let atomic = filter is_atomic deps in 
