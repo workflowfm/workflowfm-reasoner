@@ -16,7 +16,8 @@ module type Composer_json_api = Composer_api with type encodet = Json_type.json_
 module Json_api_make (Composer:Composer_type) : Composer_json_api =
   struct
     open Json_type.Browse
-    include Composer
+    module Composer = Composer
+    open Composer
     module Codec = Json_codec(Process) 
     include Codec
     module Commands = Command_store(Codec)
@@ -84,9 +85,10 @@ module Json_api_make (Composer:Composer_type) : Composer_json_api =
 
 
 
-module Json_commands (Composer : Composer_json_api) =
+module Json_commands (Api : Composer_json_api) =
   struct
     open Json_type.Browse
+    open Api
     open Composer
 
     let ping j =

@@ -2122,6 +2122,11 @@ module Json_comms = Json_commands(Jamba);;
 Json_comms.load();;
 Jamba.Commands.names();;
 
+module Json_deploy_comms = Json_deploy_commands(Jamba);;
+Json_deploy_comms.load();;
+Jamba.Commands.names();;
+
+
 module Bak = Composer_console_make(Camp);;
 
 Bak.create "Pa" [`X`] `A ** B ** C` ;;
@@ -2145,3 +2150,27 @@ Bak.ilist();;
 Bak.load "Res";;
 Bak.list();;
 Bak.ilist();;
+
+
+
+create "Pa" [`X`] `A ** B ** C` ;;
+create "Pb" [`A`] `D` ;;
+create "Pc" [`B`] `E` ;;
+create "Pd" [`C`] `F` ;;
+
+join "Pa" "lr" "Pb" "(NEG A)";;
+join "_Step0" "lrr" "Pc" "(NEG B)";;
+join "_Step1" "r" "Pd" "(NEG C)";;
+
+store "_Step2" "Res";;
+
+get "Res";;
+
+list();;
+ilist();;
+
+reset ();;
+ilist();;
+load "Res";;
+list();;
+ilist();;

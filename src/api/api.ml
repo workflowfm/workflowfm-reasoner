@@ -82,11 +82,11 @@ end;;
 
 module type Composer_api =
   sig
-    include Composer_type
-    include Codec_type with type proc = Process.t
+    module Composer : Composer_type
+    include Codec_type with type proc = Composer.Process.t
     module Commands : Command_store_type with type encodet = encodet
 
-    val response : Response.t -> encodet 
+    val response : Composer.Response.t -> encodet 
     val execute : encodet -> encodet list
   end;;
 					 			    
