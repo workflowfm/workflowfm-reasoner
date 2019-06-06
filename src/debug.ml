@@ -2179,5 +2179,8 @@ responses();;
 map Composer.Response.name (responses());;
 
 json_responses();;
-
+ 
 Json_composer_io.execute "{\"command\":\"ping\",\"ping\":0.2}";;
+
+run_file (!serv_dir ^ "../examples/toy.ml");;
+run_example "toy";;
