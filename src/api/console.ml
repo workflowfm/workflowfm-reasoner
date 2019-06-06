@@ -69,7 +69,7 @@ module Composer_console_make (Composer : Composer_type) : Composer_console_type 
 
     let processes = Hashtbl.create 50
 
-    let add_process (p:Composer.Process.t) = Hashtbl.add processes p.Composer.Process.name p ; p
+    let add_process (p:Composer.Process.t) = Hashtbl.replace processes p.Composer.Process.name p ; p
     let get_process (s:string) = Hashtbl.find processes s
     let exists_process (s:string) = Hashtbl.mem processes s
     let del_process (s:string) = Hashtbl.remove processes s
@@ -78,7 +78,7 @@ module Composer_console_make (Composer : Composer_type) : Composer_console_type 
 
     let intermediates = Hashtbl.create 50
 
-    let add_intermediate (p:Composer.Process.t) = Hashtbl.add intermediates p.Composer.Process.name p ; p
+    let add_intermediate (p:Composer.Process.t) = Hashtbl.replace intermediates p.Composer.Process.name p ; p
     let get_intermediate (s:string) = Hashtbl.find intermediates s
     let exists_intermediate (s:string) = Hashtbl.mem intermediates s
     let del_intermediate (s:string) = Hashtbl.remove intermediates s
@@ -180,10 +180,12 @@ module Composer_console_make (Composer : Composer_type) : Composer_console_type 
         try (
           let fail = find Composer.Response.failed results in
           fail 
-        ) with Failure "find" ->
+        ) with Failure _ ->
                 try ( 
                   let Composer.Response.Compose(p,_,_) as r = find final results in
-                  ( logrl results ; add_process p ; r )
+                  ( ignore (logrl results) ; 
+                    ignore (add_process { p with Composer.Process.intermediate = false; actions = acts }) ; 
+                    r )
                 ) with Failure _ -> last results
 
     let load name = 
