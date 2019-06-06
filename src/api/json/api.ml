@@ -58,7 +58,8 @@ module Json_api_make (Composer:Composer_type) : Composer_json_api =
                  ] in
              
              Object [
-                 ("response", String (s ^ "Deploy"));
+                 ("response", String ("Deploy"));
+                 ("type", String s);
                  ("deployment", Array (map file l))
                ]
              

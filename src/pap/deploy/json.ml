@@ -24,18 +24,6 @@ module Json_deploy_commands (Api : Composer_json_api) =
     module Pilib = Pilib_make(Composer)
     module Pew = Pew_make(Composer)
 
-    let deploy_response (d:Composer.Response.t) = match d with
-      | Deploy (typ,files) -> 
-         let encode_file (path,content,overwrite) =
-           (Object [
-                ("path", String path);
-                ("content", String content);
-                ("overwrite", Bool overwrite)]) in
-         Object [
-             ("response", String (typ ^ "Deploy"));
-             ("deployment", Array (map encode_file files))]
-      | r -> response r
-
     let deploy f tbl =
       let proc = Decode.process (field tbl "process")
       and deps = list Decode.process (field tbl "components") in
