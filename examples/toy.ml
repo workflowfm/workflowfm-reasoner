@@ -1,4 +1,4 @@
-loads (!hol_dir ^ "workflowfm/src/make.console.ml");;
+needs (!hol_dir ^ "/workflowfm/src/make.console.ml");;
 
 create "Pa" [`X`] `A ** B ** C` ;;
 create "Pb" [`A`] `D` ;;
