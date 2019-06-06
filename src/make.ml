@@ -1,77 +1,40 @@
-(* ========================================================================= *)
-(* Basic loader for all the CLL/pi-calculus/processes stuff.                 *)
-(*                                                                           *)
-(*                   Petros Papapanagiotou, Jacques Fleuriot                 *)
-(*                          University of Edinburgh                          *)
-(*                                 2009-2019                                 *)
-(* ========================================================================= *)
+(* ========================================================================= 
+   Loader for the Reasoner with the JSON API                                 
+        
+   Petros Papapanagiotou                  
+   Center of Intelligent Systems and their Applications         
+   School of Informatics, The University of Edinburgh                         
+   2009 - 2019                                
+ ========================================================================= *)
 
 let serv_dir = ref (!hol_dir ^ "/workflowfm/src/");;
 
 (* = Core = *)
 
-loads (!serv_dir ^ "processes/processes.ml");;
-loads (!serv_dir ^ "CLL/tactics.ml");;
+loads (!serv_dir ^ "make.composer.ml");;
 
 
-(* = Proofs-as-processes = *)
-
-loads (!serv_dir ^ "pap/pap.ml");;
-
-Cllpi.hide_procs();;
-
-module Clltac = Clltactics(Cllpi);;
-module Proc = Process(Cllpi);;
-
-
-(* = Initialisation = *)
-
-Action.add "JOIN" Clltac.JOIN_TAC;;
-Action.add "TENSOR" Clltac.TENSOR_TAC;;
-Action.add "WITH" Clltac.WITH_TAC;;
-
-type_invention_warning := false;;
-
-hide_constant "F";;
-hide_constant "I";;
-hide_constant "T";;
-
-
-(* = PiViz/MWB output = *)
-
-loads (!serv_dir ^ "pap/piviz.ml");;
-
-module Piviz = Piviz_make(Proc);;
-
-(* = Scala code extraction = *)
-
-loads (!serv_dir ^ "pap/pilib/pilib.ml");;
-loads (!serv_dir ^ "pap/pew.ml");;
-
-
-(* = JSON interface = *)
+(* = JSON API = *)
 
 loads (!serv_dir ^ "api/json/make.ml");;
 
-module Json_comp = Json_composer(Proc);;
-
-loads (!serv_dir ^ "pap/pilib/json.ml");;
-
-Json_command.add "create" Json_comp.create_process;;
-Json_command.add "compose1" Json_comp.compose1;;
-Json_command.add "compose" Json_comp.compose;;
-Json_command.add "verify" Json_comp.verify;;
-
-let piviz_deploy p ds = ["result",Piviz.deploy p ds] in
-    Json_command.add "piviz" (Json_comp.deploy "PiViz" piviz_deploy);;
-
-Json_command.add "pilib" Json_pilib.scaldeploy;;
-Json_command.add "pilibstateful" Json_pilib.scaldeploystateful;;
+module Json_api = Json_api_make(Composer);;
 
 
+(* = JSON Commands = *)
+
+module Json_comms = Json_commands(Json_api);;
+Json_comms.load();;
 
 
+(* = JSON Deployment Commands = *)
+
+loads (!serv_dir ^ "pap/deploy/json.ml");;
+
+module Json_deploy_comms = Json_deploy_commands(Json_api);;
+Json_deploy_comms.load();;
 
 
+(* = JSON I/O = *)
 
-
+module Json_composer_io = Json_composer_io_make(Json_api);;

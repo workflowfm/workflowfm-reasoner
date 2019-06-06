@@ -10,8 +10,8 @@
    2019
  ========================================================================= *)
 
-needs (!serv_dir ^ "json/lib.ml");;
-needs (!serv_dir ^ "json/api.ml");;
+needs (!serv_dir ^ "api/json/lib.ml");;
+needs (!serv_dir ^ "api/json/api.ml");;
 needs (!serv_dir ^ "pap/deploy/piviz.ml");;
 needs (!serv_dir ^ "pap/deploy/pilib.ml");;
 needs (!serv_dir ^ "pap/deploy/pew.ml");;
