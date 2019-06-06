@@ -160,15 +160,9 @@ let xx = Json_io.json_of_string "{\"action\":{\"act\":\"JOIN\",\"larg\":\"_Step1
 (* ============================================================================= *)
 (* ============================================================================= *)
 
-let myst = Actionstate.create "TEST" 0;;
-let rec add_provs procs st =
-    match procs with
-      | [] -> st
-      | p :: t ->
-	let n,prov = Proc.get_atomic_prov p in
-	add_provs t (Actionstate.add_prov n prov st);;
 let mycomp lbl procs acts =
-  let p,_,s = Proc.compose (add_provs procs myst) lbl procs acts in p,s;;
+  let p,_,s = Proc.compose lbl procs acts in p,s;;
+
 
 (* ============================================================================= *)
 (* ============================================================================= *)
@@ -221,8 +215,8 @@ let mypb = Proc.create "Pb" [`C`;`E`] `G` ;;
 let mypc = Proc.create "Pc" [`D`;`G`] `H` ;;
 let myact1 = Action.create "JOIN" "Pa" "l" "Pb" "(NEG C)" "Res";;
 let myact2 = Action.create "JOIN" "Res" "r" "Pc" "(NEG D)" "Rez";;
-Proc.compose myst "Res" [mypa;mypb;mypc] [myact1];;
-Proc.compose myst "Rez" [mypa;mypb;mypc] [myact1;myact2];;
+Proc.compose "Res" [mypa;mypb;mypc] [myact1];;
+Proc.compose "Rez" [mypa;mypb;mypc] [myact1;myact2];;
 (* xxx Provenance? *)
 
 let mypa = Proc.create "Pa" [`A`;`B`] `C ** D` ;;
@@ -2004,15 +1998,8 @@ SIMP_CONV [] `b + 1 = a ==> a = x +1 ` ;;
 let mypa = Proc.create "Pa" [`A ++ C`;`B ++ (D ** E)`] `C ** (G ++ H)` ;;
 let mypb = Proc.create "Pb" [`A`;`B`] `C ++ D` ;;
 
-let myst = Actionstate.create 0;;
-let rec add_provs procs st =
-    match procs with
-      | [] -> st
-      | p :: t ->
-	let n,prov = Proc.get_atomic_prov p in
-	add_provs t (Actionstate.add_prov n prov st);;
 let mycomp lbl procs acts =
-  let p,_,s = Proc.compose (add_provs procs myst) lbl procs acts in p,s;;
+  let p,_,s = Proc.compose lbl procs acts in p,s;;
 
 (* ============================================================================= *)
 (* ============================================================================= *)
@@ -2128,5 +2115,72 @@ module Xrules = Cllrules(Cllpi);;
 Xrules.ll_with_self;;
 (* ------------------------------------------------------------------------------------*)
 
-(* Web stuff! *)
+module Camp = Composer_make(Proc);;
 
+module Jamba = Json_api_make(Camp);;
+module Json_comms = Json_commands(Jamba);;
+Json_comms.load();;
+Jamba.Commands.names();;
+
+module Json_deploy_comms = Json_deploy_commands(Jamba);;
+Json_deploy_comms.load();;
+Jamba.Commands.names();;
+
+
+module Bak = Composer_console_make(Camp);;
+
+Bak.create "Pa" [`X`] `A ** B ** C` ;;
+Bak.create "Pb" [`A`] `D` ;;
+Bak.create "Pc" [`B`] `E` ;;
+Bak.create "Pd" [`C`] `F` ;;
+
+Bak.join "Pa" "lr" "Pb" "(NEG A)";;
+Bak.join "_Step0" "lrr" "Pc" "(NEG B)";;
+Bak.join "_Step1" "r" "Pd" "(NEG C)";;
+
+Bak.store "_Step2" "Res";;
+
+Bak.get "Res";;
+
+Bak.list();;
+Bak.ilist();;
+
+Bak.reset ();;
+Bak.ilist();;
+Bak.load "Res";;
+Bak.list();;
+Bak.ilist();;
+
+
+
+create "Pa" [`X`] `A ** B ** C` ;;
+create "Pb" [`A`] `D` ;;
+create "Pc" [`B`] `E` ;;
+create "Pd" [`C`] `F` ;;
+
+join "Pa" "lr" "Pb" "(NEG A)";;
+join "_Step0" "lrr" "Pc" "(NEG B)";;
+join "_Step1" "r" "Pd" "(NEG C)";;
+
+store "_Step2" "Res";;
+
+get "Res";;
+
+list();;
+ilist();;
+
+reset ();;
+ilist();;
+load "Res";;
+list();;
+ilist();;
+
+responses();;
+map Composer.Response.name (responses());;
+
+json_responses();;
+ 
+Json_composer_io.execute "{\"command\":\"ping\",\"ping\":0.2}";;
+
+run_file (!serv_dir ^ "../examples/toy.ml");;
+run_example "toy";;

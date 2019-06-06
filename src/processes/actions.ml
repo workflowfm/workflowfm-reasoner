@@ -271,6 +271,13 @@ module Action = struct
 (*  let (TAC:t -> tactic) =
     fun act -> Actionstate.TAC (apply act)
 *)
+    
+  let root_deps (l:t list) =
+    let split_act a = [a.larg; a.rarg], a.res in
+    let splits = map split_act l in
+    let deps,results = unzip splits in
+    subtract (setify (flat deps)) results
+
 end;;
 
 type actiontactic = Action.tac;;
