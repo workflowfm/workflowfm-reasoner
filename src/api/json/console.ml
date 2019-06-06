@@ -1,7 +1,5 @@
 (* ========================================================================= 
-   JSON Composer Console 
-   - This is designed to accept commands from the console/toplevel and 
-   export a list of JSON responses to a file.
+   JSON Export of Console responses
   
    Petros Papapanagiotou
    Center of Intelligent Systems and their Applications         
@@ -9,25 +7,26 @@
    2019
  ========================================================================= *)
 
-(* TODO TODO *)
+needs (!serv_dir ^ "api/json/api.ml");;
+loads (!serv_dir ^ "api/console.ml");;
 
-module Json_console_make (Api : Composer_json_api) = 
+module Json_console_make (Console : Composer_console_type ) : sig
+  val json_responses : unit -> Json_type.json_type
+  val store_responses : string -> unit
+  val run_file : string -> unit
+end = 
   struct
-  open Json_type.Browse 
-  open Api
-
-  let print j =
-    print_string "\nJSON_START\n";
-    print_string (Json_io.string_of_json j);
-    print_string "\nJSON_END\n" 
-
-  let print_file s j = Json_io.save_json s j
-
-  let execute_json j =
-      let res = Api.execute j in
-      ignore (map print res) ; res
-
-  let execute_file s = execute_json (Json_io.load_json s)
-  let execute s = execute_json (Json_io.json_of_string s)
-		
+    
+    module Json_api : Composer_json_api with module Composer = Console.Composer
+      = Json_api_make(Console.Composer) 
+    open Json_type.Browse
+ 
+    let json_responses () = Array (map Json_api.response (Console.responses ()))
+    
+    let store_responses file = Json_io.save_json file (json_responses ())
+    
+    let run_file file = 
+      Console.full_reset () ; 
+      use_file file ;
+      store_responses ((Filename.remove_extension file) ^ ".json")
 end;;

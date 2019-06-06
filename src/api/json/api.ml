@@ -13,7 +13,7 @@ needs (!serv_dir ^ "api/json/codecs.ml");;
 
 module type Composer_json_api = Composer_api with type encodet = Json_type.json_type;; 
 
-module Json_api_make (Composer:Composer_type) : Composer_json_api =
+module Json_api_make (Composer:Composer_type) : Composer_json_api with module Composer = Composer =
   struct
     open Json_type.Browse
     module Composer = Composer

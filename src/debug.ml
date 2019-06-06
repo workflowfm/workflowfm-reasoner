@@ -2178,4 +2178,6 @@ ilist();;
 responses();;
 map Composer.Response.name (responses());;
 
+json_responses();;
+
 Json_composer_io.execute "{\"command\":\"ping\",\"ping\":0.2}";;

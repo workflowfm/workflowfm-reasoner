@@ -9,6 +9,7 @@
 
 needs (!serv_dir ^ "processes/processes.ml");;
 needs (!serv_dir ^ "api/composer.ml");;
+needs (!serv_dir ^ "api/api.ml");;
 
 module type Composer_console_type =
     sig
