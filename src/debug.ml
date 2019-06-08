@@ -547,7 +547,7 @@ let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "NEG (A ++ C ++ D)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
 
-
+(* ********************* *)
 
 
 let asms = [Proc.get_cll myst2; Proc.get_cll mypc];;
