@@ -499,7 +499,7 @@ module Clltactics =
 		               (`B:LinProp`,outl);
 		               (`C:LinProp`,(rand o rand o rator) rh);(mk_var("c",Cll.Pcalc.chantp),rand rh)]
 		              Rules.ll_with_serv))
-	          (Actionstate.ADD_PROV_TAC act.Action.res (prov_of_tm act.Action.res outl))
+	          (Actionstate.ADD_PROV_TAC act.Action.res (prov_of_tm ("&" ^ act.Action.res) outl))
 	      else 
 	        (* TODO cases of single input, optional outputs can always match *)
 	        ETHEN (
