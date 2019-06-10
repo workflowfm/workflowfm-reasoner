@@ -378,9 +378,11 @@ module Clltactics =
 		               with Failure _ -> failwith ("WITH_TAC: Input `"^act.Action.lsel^"` not found in: " 
 						                           ^ (string_of_term conl)) in
 
-      let propEq l r =
+      (* Given 2 terms of the form `NEG A <> a` and `NEG B <> b` compare A = B *)
+      let propEq l r = 
 	    (rand o rand o rator) l = (rand o rand o rator) r in
       
+      (* Remove common propositions (comparing with propEq) from the 2 lists *)
       let rec remove_props lins rins =
 	    match (lins,rins) with
 	    | [],r -> [],r
@@ -391,22 +393,29 @@ module Clltactics =
 	                  let lr,rr = remove_props t r in
 	                  h::lr,rr in
       
+      (* linputs' and rinputs' contain non-common inputs for each process *)
       let linputs',rinputs' = remove_props linputs rinputs in
-      let rinchans = map rand rinputs' in
       let glfrees = gl_frees gl in
 
+      (* Get the channels of the non-common inputs in the right process *)
+      let rinchans = map rand rinputs' in
+      (* A channel may not be an original input if it got filtered *)
+      (* We find out by comparing looking up the channel in the original list *)
       let isOrigInput input = mem (rand input) rinchans in 
 
+      (* Filter the left input to match the right or vice versa *)
       let matchInputTac inputl inputr =
 	    EORELSE
 	      (FILTER_TAC ~glfrees:glfrees act.Action.larg inputl ((rand o rand o rator) inputr) true)
 	      (FILTER_TAC ~glfrees:glfrees act.Action.rarg inputr ((rand o rand o rator) inputl) true) in
       
+      (* Match inl with any of the inputsr via filtering *)
       let matchInputWithAnyTac inl inputsr =
 	    let filter_tacs = map (fun i -> matchInputTac inl i) inputsr in 
 	    EFIRST filter_tacs in
       
       let rec matchInputsTac extrasl extrasr st (asl,w as gl) =
+        (* Find the latest inputs / outputs of each process as they may have been filtered / expanded *)
 	    let thml = try ( assoc act.Action.larg asl )
 	               with Failure _ -> failwith ("WITH_TAC: Failed to find assumption: " ^ act.Action.larg) 
 	    and thmr = try ( assoc act.Action.rarg asl )
@@ -417,6 +426,7 @@ module Clltactics =
 	    and inputsl = find_input_terms (concl thml)
 	    and inputsr = find_input_terms (concl thmr) in
 
+        (* We always ignore the user selected inputs *)
 	    let rh,rinputs = try ( remove (find_sel act.Action.rsel) inputsr ) 
 	                     with Failure _ -> failwith ("WITH_TAC: Input `"^act.Action.rsel^"` not found in: " 
 				                                     ^ (string_of_term (concl thmr))) 
@@ -424,45 +434,65 @@ module Clltactics =
 	                     with Failure _ -> failwith ("WITH_TAC: Input `"^act.Action.lsel^"` not found in: " 
 				                                     ^ (string_of_term (concl thml))) in
 	    
+        (* Also ignore inputs that match directly *)
 	    let linputs',rinputs' = remove_props linputs rinputs in
+
+        (* Also ignore inputs that have already been mapped (??) *)
 	    let lins = remove_list linputs' extrasl
 	    and rins = remove_list rinputs' extrasr in
-
+        
+	    (* Sort by linprop name *)
 	    let inputSorter l r =
-	      (* Used to sort buffered inputs so that we get a higher chance for them to match without a filter. *)
 	      (string_of_term o rand o rand o rator) l < (string_of_term o rand o rand o rator) r in
 
+        (* Add buffers for any extra inputs that were not matched *)
 	    let prepare lbl provlbl out extras st =
 	      if (extras = []) then ALL_ETAC st 
 	      else
-	        (* Get the linprops of each input *)
+	        (* Sort the inputs so that we get a higher chance for them to match directly without a filter. *)
+            (* TODO is that even true? Can we do better? *)
 	        let extras_sorted = sort inputSorter extras in
-	        let extras_props = map (rand o rand o rator) extras_sorted in 
-	        let extraout = itlist (fun x y -> list_mk_icomb "LinTimes" [x;y]) (* Tensor them *)
+	        (* Get the linprops of each input *)
+            let extras_props = map (rand o rand o rator) extras_sorted in 
+            (* Tensor them - This is the output type of PARBUF we want to build *)
+	        let extraout = itlist (fun x y -> list_mk_icomb "LinTimes" [x;y]) 
 	                         (butlast extras_props) (last extras_props) in
+            (* And these are the inputs of the PARBUF *)
 	        let ins = list_mk_munion (map mk_msing extras) in
 	        
+            (* We don't care about output provenance, because it will all come from the merge node! *)
+            (* TODO Maybe we still need to store the original provenance. Can this be useful? *)
+            (*
 	        let inputprov tm = prov_of_tm (lbl ^ ":" ^ (string_of_term (rand tm))) ((rand o rand o rator) tm) in
 	        let inprovs = map inputprov extras_sorted in
 	        let outprov = itlist provtimes (butlast inprovs) (last inprovs) in
-
+            *)
 	        ETHENL (Actionstate.CLL_TAC (drule_seqtac ~lbl:lbl ~reslbl:lbl ~glfrees:glfrees 
 					                       [(`A:LinProp`,out);(`B:LinProp`,extraout);
 					                        (`D:(LinTerm)multiset`,ins)] 
 					                       Cll.ll_times))
 	          [ ETHEN (ETAC REMOVE_ALL_ASSUMS_TAC) PARBUF_TAC ; ALL_ETAC ]
-	          (Actionstate.set_prov (timesprov_r provlbl outprov lbl st.Actionstate.prov) st) in
+	          (* (Actionstate.set_prov (timesprov_r provlbl outprov lbl st.Actionstate.prov) st) in *)
+              st in
 	    
 	    match (lins,rins) with
-	    | [] , [] -> EEVERY [
-	                     prepare act.Action.larg act.Action.rarg outl extrasr ;
-	                     prepare act.Action.rarg act.Action.larg outr extrasl
-	                   ] st gl 
-	    | _ , [] -> matchInputsTac (extrasl @ lins) extrasr st gl
-	    | [] , _ -> matchInputsTac extrasl (extrasr @ rins) st gl
-	    | (hl :: restl) , _ ->
+	    | [] , [] -> (* No inputs left to match, so just buffer the extras and finish *)
+           EEVERY [
+	           prepare act.Action.larg act.Action.rarg outl extrasr ;
+	           prepare act.Action.rarg act.Action.larg outr extrasl
+	         ] st gl 
+	    | _ , [] -> (* We matched all the inputs on the right, so add the inputs on the left as extras *)
+           matchInputsTac (extrasl @ lins) extrasr st gl
+	    | [] , _ -> (* We matched all the inputs on the left, so add the intputs on the right as extras *)
+           matchInputsTac extrasl (extrasr @ rins) st gl
+	    | (hl :: restl) , _ -> (* We have unmatched inputs on both sides *)
 	       EORELSE
+             (* Try to match the first input on the left with one on the right *)
+             (* If that succeeds, keep going without adding any extras *)
+             (* In the next iteration, hl will match with another input and will be removed by remove_props *)
 	         (ETHEN (matchInputWithAnyTac hl rins) (matchInputsTac extrasl extrasr))
+             (* If that fails, hl does not have a match, so add it as an extra and keep going *)
+             (* This time it will be removed by remove_list *)
 	         (matchInputsTac (hl :: extrasl) extrasr)
 	         st gl in
       
@@ -474,6 +504,8 @@ module Clltactics =
 	    and conr = concl thmr in
 	    let outl = find_output conl
 	    and outr = find_output_term conr in
+        (* Try a filter to convert one output to the other *)
+        (* Note that if they already match, FILTER_TAC will not do anything *)
 	    ETRY (FILTER_TAC ~glfrees:glfrees act.Action.rarg outr outl false) st gl in 
 
       

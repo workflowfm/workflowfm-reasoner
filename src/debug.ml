@@ -2184,3 +2184,34 @@ Json_composer_io.execute "{\"command\":\"ping\",\"ping\":0.2}";;
 
 run_file (!serv_dir ^ "../examples/toy.ml");;
 run_example "toy";;
+
+
+Console.Composer.Process.compose1 (Action.create "WITH" "P1" "NEG X" "Q1" "NEG Y" "_StepX") (get "P1") (get "Q1");;
+
+module Piviz = Piviz_make (Console.Composer);;
+let Console.Composer.Response.Deploy (_,myl) = Piviz.deploy (get "R1") [ get "P1" ; get "Q1" ] ;;
+(print_string o snd3 o hd) l;;
+
+let xp = Console.Composer.Process.get_cll (get "P1");;
+let xq = Console.Composer.Process.get_cll (get "Q1");;
+
+let xpins = find_input_terms xp;;
+let xqins = find_input_terms xq;;
+
+let xpropEq l r = 
+  (rand o rand o rator) l = (rand o rand o rator) r ;;
+    
+let rec xremove_props lins rins =
+  match (lins,rins) with
+  | [],r -> [],r
+  | h::t,r -> try (
+	            let _,rest = remove (xpropEq h) r in
+	            xremove_props t rest )
+	          with Failure _ ->
+	            let lr,rr = xremove_props t r in
+	            h::lr,rr
+;;
+
+let xres = xremove_props xpins xqins;;
+
+remove_list [1;1;2;3] [1;4;5;6];;
