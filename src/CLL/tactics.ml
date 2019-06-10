@@ -596,7 +596,7 @@ module Clltactics =
 	      else None in
 	
 	match directMatch tryinputs with
-	  | Some c -> Actionstate.ADD_IPROV_TAC target (Provleaf (string_of_term c ^ ":" ^ string_of_int (st.Actionstate.ctr - 1))) (Actionstate.inc 1 st) gl
+	  | Some c -> Actionstate.ADD_IPROV_TAC target (Provleaf (string_of_term c ^ ":" ^ string_of_int st.Actionstate.ctr)) (Actionstate.inc 1 st) gl
 	  (* (prov_of_tm (string_of_term c) target)*)
 	  | None -> 
 	    (* else find an input that can be filtered to match target. *)
