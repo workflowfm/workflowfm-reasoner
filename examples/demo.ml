@@ -92,6 +92,7 @@ joindemo [`X`] `A` "" [`A`] `Y` "NEG A";;
 joindemo [`X`] `A ** B` "lr" [`A`] `Y` "NEG A";;
 joindemo [`X`] `A ** B` "lr" [`A`;`C`] `Y` "NEG A";;
 joindemo [`X`] `A ** B` "lr" [`A`;`B`] `Y` "NEG A";;
+create (demopname () "S") [`X`;`B`] `Y ** B` ;;
 
 joindemo [`X`] `A ++ E` "r" [`E`] `Y` "NEG E";;
 joindemo [`X`] `A ++ E` "r" [`E`] `A` "NEG E";;
