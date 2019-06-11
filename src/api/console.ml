@@ -38,10 +38,10 @@ module type Composer_console_type =
       val full_reset : unit -> unit
 
       val create : string -> term list -> term -> Composer.Response.t
-      val compose1 : Action.t -> Composer.Process.t
-      val tensor : string -> string -> Composer.Process.t
-      val cwith : string -> string -> string -> string -> Composer.Process.t
-      val join : string -> string -> string -> string -> Composer.Process.t
+      val compose1 : Action.t -> Composer.Response.t
+      val tensor : string -> string -> Composer.Response.t
+      val cwith : string -> string -> string -> string -> Composer.Response.t
+      val join : string -> string -> string -> string -> Composer.Response.t
 
       val store : string -> string -> Composer.Response.t
       val load : string -> unit
@@ -127,29 +127,29 @@ module Composer_console_make (Composer : Composer_type) : Composer_console_type 
     let compose1 act =
       let lp = get act.Action.larg
       and rp = get act.Action.rarg in
-      let (p,_) = Composer.Process.compose1 act lp rp in
-      add_intermediate p
+      let Composer.Response.Compose(p,_,_) as r = Composer.compose1 lp rp act in
+      add_intermediate p ; r
 
     let tensor lhs rhs =
       let act = Action.create "TENSOR" lhs "" rhs "" (getstep())
       and lp = get lhs
       and rp = get rhs in
-      let (p,_) = Composer.Process.compose1 act lp rp in
-      add_intermediate p
+      let Composer.Response.Compose(p,_,_) as r = Composer.compose1 lp rp act in
+      add_intermediate p ; r
 
     let cwith lhs lsel rhs rsel =
       let act = Action.create "WITH" lhs lsel rhs rsel (getstep())
       and lp = get lhs
       and rp = get rhs in
-      let (p,_) = Composer.Process.compose1 act lp rp in
-      add_intermediate p
+      let Composer.Response.Compose(p,_,_) as r = Composer.compose1 lp rp act in
+      add_intermediate p ; r
 
     let join lhs lsel rhs rsel =
       let act = Action.create "JOIN" lhs lsel rhs rsel (getstep())
       and lp = get lhs
       and rp = get rhs in
-      let (p,_) = Composer.Process.compose1 act lp rp in
-      add_intermediate p
+      let Composer.Response.Compose(p,_,_) as r = Composer.compose1 lp rp act in
+      add_intermediate p ; r
 
     let components p = (map get o Action.root_deps) p.Composer.Process.actions
 
