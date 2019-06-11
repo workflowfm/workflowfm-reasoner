@@ -126,12 +126,18 @@ module Json_act =
               ("term", Json_cll.Encode.prop n);
               ("prov", prov p)]
 
+        let merge_entry (tm,l,r) =
+          Object [
+              ("term", Json_cll.Encode.term tm);
+              ("leftChannel", String l);
+              ("rightChannel", String r)
+            ]
+          
         let actionstate (st:Actionstate.t) =
           Object [
               ("label", String st.Actionstate.label);
               ("ctr", Int st.Actionstate.ctr);
-              ("buffered", Array (map Json_cll.Encode.prop st.Actionstate.buffered));
-              ("joined", Array (map Json_cll.Encode.term st.Actionstate.joined));
+              ("merged", Array (map merge_entry st.Actionstate.merged));
               ("iprov", Array (map iprov_entry st.Actionstate.iprov));
               ("prov", Array (map prov_entry st.Actionstate.prov))]
       end
@@ -169,19 +175,21 @@ module Json_act =
           let tbl = make_table (objekt j) in
           Json_cll.Decode.prop (field tbl "term"), prov (field tbl "prov")
 
+        let merge_entry decode_chan j =
+          let tbl = make_table (objekt j) in
+          Json_cll.Decode.term decode_chan (field tbl "term"), string (field tbl "leftChannel"), string (field tbl "rightChannel")
+
         let actionstate decode_chan j =
           let tbl = make_table (objekt j) in
           let label = string (field tbl "label")
           and ctr = int (field tbl "ctr")
-          and buffered = list Json_cll.Decode.prop (field tbl "buffered") 
-          and joined = list (Json_cll.Decode.term decode_chan) (field tbl "joined")
+          and merged = list (merge_entry decode_chan) (field tbl "merged")
           and iprov = list iprov_entry (field tbl "iprov")
           and prov = list prov_entry (field tbl "prov") in
           ({ Actionstate.label = label ;
              Actionstate.ctr = ctr ;
              Actionstate.metas = [] ;
-             Actionstate.buffered = buffered ;
-             Actionstate.joined = joined ;
+             Actionstate.merged = merged ;
              Actionstate.iprov = iprov ;
              Actionstate.prov = prov}:Actionstate.t)
       end
