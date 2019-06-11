@@ -127,29 +127,37 @@ module Composer_console_make (Composer : Composer_type) : Composer_console_type 
     let compose1 act =
       let lp = get act.Action.larg
       and rp = get act.Action.rarg in
-      let Composer.Response.Compose(p,_,_) as r = Composer.compose1 lp rp act in
-      add_intermediate p ; r
+      let r = Composer.compose1 lp rp act in
+      match r with 
+      | Composer.Response.Compose(p,_,_) -> add_intermediate p ; r
+      | _ -> r
 
     let tensor lhs rhs =
       let act = Action.create "TENSOR" lhs "" rhs "" (getstep())
       and lp = get lhs
       and rp = get rhs in
-      let Composer.Response.Compose(p,_,_) as r = Composer.compose1 lp rp act in
-      add_intermediate p ; r
+      let r = Composer.compose1 lp rp act in
+      match r with 
+      | Composer.Response.Compose(p,_,_) -> add_intermediate p ; r
+      | _ -> r
 
     let cwith lhs lsel rhs rsel =
       let act = Action.create "WITH" lhs lsel rhs rsel (getstep())
       and lp = get lhs
       and rp = get rhs in
-      let Composer.Response.Compose(p,_,_) as r = Composer.compose1 lp rp act in
-      add_intermediate p ; r
+      let r = Composer.compose1 lp rp act in
+      match r with 
+      | Composer.Response.Compose(p,_,_) -> add_intermediate p ; r
+      | _ -> r
 
     let join lhs lsel rhs rsel =
       let act = Action.create "JOIN" lhs lsel rhs rsel (getstep())
       and lp = get lhs
       and rp = get rhs in
-      let Composer.Response.Compose(p,_,_) as r = Composer.compose1 lp rp act in
-      add_intermediate p ; r
+      let r = Composer.compose1 lp rp act in
+      match r with 
+      | Composer.Response.Compose(p,_,_) -> add_intermediate p ; r
+      | _ -> r
 
     let components p = (map get o Action.root_deps) p.Composer.Process.actions
 
