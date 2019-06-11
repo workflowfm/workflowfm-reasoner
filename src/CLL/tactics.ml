@@ -313,7 +313,7 @@ module Clltactics =
 	      ETHENL (Actionstate.CLL_TAC 
 		            (drule_seqtac ~lbl:lbl ~reslbl:lbl ~glfrees:glfrees
 			           [`A:LinProp`,(rand o rand o rator) cllTerm; (* rand of NEG *)
-			            `a:num`,rand cllTerm;
+			            mk_var("a",Cll.Pcalc.chantp),rand cllTerm;
 			            `B:LinProp`,targetProp]
 			           (*			  `b:num`,rand cllTerm] (* TODO This needs testing? *)*)
 			           Rules.ll_filter_input))
@@ -326,7 +326,7 @@ module Clltactics =
 	      ETHENL (Actionstate.CLL_TAC 
 		            (drule_seqtac ~lbl:lbl ~reslbl:lbl ~glfrees:glfrees
 			           [`A:LinProp`,(rand o rator) cllTerm;
-			            `a:num`,rand cllTerm;
+			            mk_var("a",Cll.Pcalc.chantp),rand cllTerm;
 			            `B:LinProp`,targetProp]
 			           (*`b:num`,rand cllTerm] (* TODO This needs testing? *)*)
 			           Rules.ll_filter_output))
@@ -386,12 +386,11 @@ module Clltactics =
 		               with Failure _ -> failwith ("WITH_TAC: Input `"^act.Action.lsel^"` not found in: " 
 						                           ^ (string_of_term conl)) in
 
-      (* Given 2 terms of the form `NEG A <> a` and `NEG B <> b` compare A = B *)
-      let propEq l r = 
-	    (rand o rand o rator) l = (rand o rand o rator) r in
-      
       (* Remove common propositions (comparing with propEq) from the 2 lists *)
       let remove_props lins rins = 
+      (* Given 2 terms of the form `NEG A <> a` and `NEG B <> b` compare A = B *)
+        let propEq l r = 
+	      (rand o rand o rator) l = (rand o rand o rator) r in
         let rec remove_props' lins rins lrest removed =
 	      match (lins,rins) with
 	      | [],_ -> removed,lrest,rins
@@ -403,11 +402,6 @@ module Clltactics =
 	                    remove_props' t rins (l::lrest) removed in
         remove_props' lins rins [] [] in
                 
-      (* Remove a channel that was merged *)
-      let remove_chan (_,_,chan) ins = 
-        let check tm = (string_of_term o rand) tm = chan in
-        remove check ins in
-                                                            
       (* Filter the left input to match the right or vice versa *)
       let matchInputTac inputl inputr =
 	    EORELSE
@@ -458,6 +452,11 @@ module Clltactics =
 	 
       
       let rec matchInputsTac lins rins extrasl extrasr =  
+        (* Remove a channel that was merged *)
+        let remove_chan (_,_,chan) ins = 
+          let check tm = (string_of_term o rand) tm = chan in
+          remove check ins in
+
 	    match (lins,rins) with
 	    | [] , [] -> (* No inputs left to match, so just buffer the extras and finish *)
            EEVERY [
