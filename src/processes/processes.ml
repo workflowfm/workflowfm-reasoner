@@ -200,7 +200,7 @@ module Process (Cll : Cllproc_type) : Process_type =
  
   let (compose1 : Action.t -> t -> t -> t * Actionstate.t) =
     fun comp lp rp ->
-    let state = Actionstate.set_prov [get_prov lp; get_prov rp] (Actionstate.create comp.Action.res 0)
+    let state = Actionstate.set_prov [get_prov lp; get_prov rp] (Actionstate.create comp.Action.res)
     and tml = (gen_ll_channels o get_cll) lp
     and tmr = (gen_ll_channels o get_cll) rp in
     
@@ -219,7 +219,7 @@ module Process (Cll : Cllproc_type) : Process_type =
     
   let prove label deps acts res =
     print_string ("*** Composing: " ^ res) ; print_newline () ; reset_time() ;
-    let state = Actionstate.set_prov (map get_prov deps) (Actionstate.create label 0)
+    let state = Actionstate.set_prov (map get_prov deps) (Actionstate.create label)
     and asms = map (gen_ll_channels o get_cll) deps
     and labels = map (fun x -> x.name) deps in
     let newvar = genvar `:bool` in

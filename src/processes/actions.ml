@@ -45,15 +45,14 @@ module Actionstate = struct
       label : string;
       ctr : int;
       metas : term list;
-      buffered : term list;
-      joined : term list;
+      merged : (term * string * string) list;
       iprov : (term * provtree) list;
       prov : (string * provtree) list;
     }
 	   
-  let create lbl ctr = ({ label = lbl ; ctr = ctr ; metas = [] ; buffered = [] ; joined = [] ; iprov = [] ; prov = [] }:t)
+  let create lbl = ({ label = lbl ; ctr = 0 ; metas = [] ; merged = [] ; iprov = [] ; prov = [] }:t)
 
-  let reset s = ({ s with buffered = [] ; joined = [] }:t)
+  let reset s = ({ s with merged = [] }:t)
 
   let label s = s.label
 		   
@@ -65,24 +64,14 @@ module Actionstate = struct
   let set_ctr c s =
     ({ s with ctr = c }:t)
     
+  let inc i s = set_ctr (s.ctr + i) s
+
   let set_metas l s =
     ({ s with metas = l }:t)
 
-  let from_seqstate (l,i,m) s = 
-    ({ s with label = l ; ctr = i ; metas = m }:t)
-
-  let to_seqstate s = (s.label,s.ctr,s.metas)
-
-  let inc i s = set_ctr (s.ctr + i) s
+  let add_merged tm (cl,cr) s =
+    ({ s with merged = (tm,string_of_term cl,string_of_term cr) :: s.merged }:t)
  	      
-  let log_buffered tm s =
-    print_string "Buffering: " ; print_term tm ; print_newline ();
-    ({ s with buffered = tm :: s.buffered }:t)
-
-  let log_joined tm s =
-    print_string "Joining: " ; print_term tm ; print_newline ();
-    ({ s with joined = tm :: s.joined }:t)
-
   let add_prov n p s =
     ({ s with prov = assoc_add n p s.prov }:t)
 
@@ -94,10 +83,17 @@ module Actionstate = struct
     
   let set_iprov pm s =
     ({ s with iprov = pm }:t)
+
+
+  let from_seqstate (l,i,m) s = 
+    ({ s with label = l ; ctr = i ; metas = m }:t)
+
+  let to_seqstate s = (s.label,s.ctr,s.metas)
       
   let (print:t -> unit) =
     fun st -> 
       let stml tml = String.concat ", " (map string_of_term tml)
+        and prmerged (tm,l,r) = ( print_string (" " ^ l ^ " = "^ r ^ " (" ^ (string_of_term tm) ^ ")") ; print_newline() )
       and prprov (n,p) = ( print_string (" " ^ n ^ " -> " ^ (string_of_prov p)) ; print_newline() ) 
       and priprov (n,p) = ( print_string (" " ^ (string_of_term n) ^ " -> " ^ (string_of_prov p)) ; print_newline() )
  in
@@ -109,22 +105,21 @@ module Actionstate = struct
     print_newline ();
     print_string ("Metas = " ^ (stml st.metas));
     print_newline ();
-    print_string ("Buffered = " ^ (stml st.buffered));
-    print_newline ();
-    print_string ("Joined = " ^ (stml st.joined));
+    print_string ("Merged = ");
+    ignore(map prmerged st.merged);
     print_newline ();
     print_string ("IProv = ") ;
     ignore(map priprov st.iprov) ;
-     print_newline ();
+    print_newline ();
     print_string ("Prov = ") ;
     ignore(map prprov st.prov) ;
-     print_newline ();
-     print_newline ();
+    print_newline ();
+    print_newline ();
     print_string "-----";
     print_newline()
-		  
+	
   let (TAC:t etactic -> tactic) =
-    fun atac -> ETAC_TAC' print (create "" (-1)) atac
+    fun atac -> ETAC_TAC' print (create "") atac
 
   let (CLL_TAC:seqtactic -> t etactic) =
     fun tac -> LIFT_ETAC to_seqstate from_seqstate tac
@@ -259,7 +254,7 @@ module Action = struct
 	  atac act thml thmr s gl in
     
     let temp_label l = 
-      if (l = "") then act.res else String.concat "__" [l;act.res;""] in
+      if (l = "") then ("c"^act.res) else String.concat "__" ["c"^l;act.res;""] in
 
     EEVERY [
         (*	ETRY (REFRESH_CHANS_TAC act.rarg);
