@@ -73,71 +73,71 @@ create "ExampleProcess" [`X`;`Y++Z`] `A ** B ** C` ;;
 
 tensordemo [`X`] `A ** B` [`Y`] `C ** D` ;;
 
-withdemo [`X`] `Z` "NEG X" [`Y`] `W` "NEG Y";;
-withdemo [`X`] `Z` "NEG X" [`Y`] `Z` "NEG Y";;
-withdemo [`X`] `A ** B` "NEG X" [`Y`] `B ** A` "NEG Y";;
+withdemo [`X`] `Z` "X" [`Y`] `W` "Y";;
+withdemo [`X`] `Z` "X" [`Y`] `Z` "Y";;
+withdemo [`X`] `A ** B` "X" [`Y`] `B ** A` "Y";;
 
-withdemo [`X`;`A`;`B`] `Z` "NEG X" [`Y`] `Z` "NEG Y";;
-withdemo [`X`;`A`] `Z` "NEG X" [`Y`;`B`] `W` "NEG Y";;
-withdemo [`X`;`A`;`C`] `Z` "NEG X" [`Y`;`B`;`D`] `W` "NEG Y";;
-withdemo [`X`;`A`;`C`] `Z` "NEG X" [`Y`;`B`;`C`] `W` "NEG Y";;
-withdemo [`X`;`A`;`C`;`C`;`C`] `Z` "NEG X" [`Y`;`B`;`C`;`C`] `W` "NEG Y";;
+withdemo [`X`;`A`;`B`] `Z` "X" [`Y`] `Z` "Y";;
+withdemo [`X`;`A`] `Z` "X" [`Y`;`B`] `W` "Y";;
+withdemo [`X`;`A`;`C`] `Z` "X" [`Y`;`B`;`D`] `W` "Y";;
+withdemo [`X`;`A`;`C`] `Z` "X" [`Y`;`B`;`C`] `W` "Y";;
+withdemo [`X`;`A`;`C`;`C`;`C`] `Z` "X" [`Y`;`B`;`C`;`C`] `W` "Y";;
 
-withdemo [`X`;`A`] `Z ** A` "NEG X" [`Y`] `Z` "NEG Y";;
-withdemo [`X`;`A`] `Z ++ (Z ** A)` "NEG X" [`Y`] `Z` "NEG Y";;
+withdemo [`X`;`A`] `Z ** A` "X" [`Y`] `Z` "Y";;
+withdemo [`X`;`A`] `Z ++ (Z ** A)` "X" [`Y`] `Z` "Y";;
 
 
-joindemo [`X`] `A` "" [`A`] `Y` "NEG A";;
+joindemo [`X`] `A` "" [`A`] `Y` "A";;
 
-joindemo [`X`] `A ** B` "lr" [`A`] `Y` "NEG A";;
-joindemo [`X`] `A ** B` "lr" [`A`;`C`] `Y` "NEG A";;
-joindemo [`X`] `A ** B` "lr" [`A`;`B`] `Y` "NEG A";;
+joindemo [`X`] `A ** B` "lr" [`A`] `Y` "A";;
+joindemo [`X`] `A ** B` "lr" [`A`;`C`] `Y` "A";;
+joindemo [`X`] `A ** B` "lr" [`A`;`B`] `Y` "A";;
 create (demopname () "S") [`X`;`B`] `Y ** B` ;;
 
-joindemo [`X`] `A ++ E` "r" [`E`] `Y` "NEG E";;
-joindemo [`X`] `A ++ E` "r" [`E`] `A` "NEG E";;
-joindemo [`X`] `A ++ E` "r" [`E`;`B`] `Y` "NEG E";;
+joindemo [`X`] `A ++ E` "r" [`E`] `Y` "E";;
+joindemo [`X`] `A ++ E` "r" [`E`] `A` "E";;
+joindemo [`X`] `A ++ E` "r" [`E`;`B`] `Y` "E";;
 
-joindemo [`X`] `A ++ E` "lr" [`A ++ E`] `Y` "NEG (A ++ E)";;
-joindemo [`X`] `E ++ A` "lr" [`A ++ E`] `Y` "NEG (A ++ E)";;
+joindemo [`X`] `A ++ E` "lr" [`A ++ E`] `Y` "A ++ E";;
+joindemo [`X`] `E ++ A` "lr" [`A ++ E`] `Y` "A ++ E";;
 
-joindemo [`X`] `A` "" [`A ++ B`] `Y` "NEG (A ++ B)";;
-joindemo [`X`] `A ++ E` "lr" [`A ++ B`] `Y` "NEG (A ++ B)";;
-joindemo [`X`] `A ++ E` "lr" [`A ++ B ++ E`] `Y` "NEG (A ++ B ++ E)";;
-joindemo [`X`] `A ** C` "lr" [`(A ** C) ++ B`] `Y` "NEG ((A ** C) ++ B)";;
+joindemo [`X`] `A` "" [`A ++ B`] `Y` "A ++ B";;
+joindemo [`X`] `A ++ E` "lr" [`A ++ B`] `Y` "A ++ B";;
+joindemo [`X`] `A ++ E` "lr" [`A ++ B ++ E`] `Y` "A ++ B ++ E";;
+joindemo [`X`] `A ** C` "lr" [`(A ** C) ++ B`] `Y` "(A ** C) ++ B";;
 
-joindemo [`X`] `A ** (A ++ B)` "lr" [`A`] `Y` "NEG A";;
-joindemo [`X`] `A ** (A ++ B)` "rlr" [`A`] `Y` "NEG A";;
+joindemo [`X`] `A ** (A ++ B)` "lr" [`A`] `Y` "A";;
+joindemo [`X`] `A ** (A ++ B)` "rlr" [`A`] `Y` "A";;
 
-joindemo [`X`] `A ++ (B ** C)` "lr" [`B ++ A`] `Y` "NEG (B ++ A)";;
-joindemo [`X`] `A ++ (B ** C)` "rlr" [`B ++ A`] `Y` "NEG (B ++ A)";;
+joindemo [`X`] `A ++ (B ** C)` "lr" [`B ++ A`] `Y` "B ++ A";;
+joindemo [`X`] `A ++ (B ** C)` "rlr" [`B ++ A`] `Y` "B ++ A";;
 
-joindemo [`X`] `A ++ B` "lr" [`A`;`A ++ B`] `Y` "NEG A";;
-joindemo [`X`] `A ++ B` "lr" [`A`;`A ++ B`] `Y` "NEG (A ++ B)";;
+joindemo [`X`] `A ++ B` "lr" [`A`;`A ++ B`] `Y` "A";;
+joindemo [`X`] `A ++ B` "lr" [`A`;`A ++ B`] `Y` "A ++ B";;
 
-joindemo [`X`] `(A ** B) ++ E` "r" [`E`] `A ** B` "NEG E";;
-joindemo [`X`] `(A ** B) ++ E` "r" [`E`] `A ** B` "NEG E";;
-joindemo [`X`] `(A ** B) ++ E` "r" [`E`] `(A ** B) ++ Y` "NEG E";;
+joindemo [`X`] `(A ** B) ++ E` "r" [`E`] `A ** B` "E";;
+joindemo [`X`] `(A ** B) ++ E` "r" [`E`] `A ** B` "E";;
+joindemo [`X`] `(A ** B) ++ E` "r" [`E`] `(A ** B) ++ Y` "E";;
 
 
-joindemo [`X`] `(A ++ B) ** (A ++ B)` "lrlr" [`A`;`A`] `Y` "NEG (A)";;
-joindemo [`X`] `(A ++ B) ** (A ++ B)` "lrlr" [`A ++ B`] `Y` "NEG (A ++ B)";;
-joindemo [`X`] `(A ++ B) ** (A ++ B)` "lrlr" [`A ++ B`;`A`] `Y` "NEG (A ++ B)";;
-joindemo [`X`] `(A ++ B) ** ((A ** C) ++ B)` "lrlr" [`A ++ B`;`A`;`C`] `Y` "NEG (A ++ B)";;
-joindemo [`X`] `(A ++ B) ** ((A ** C) ++ B)` "lrlr" [`A ++ B`;`A`] `Y` "NEG (A ++ B)";;
+joindemo [`X`] `(A ++ B) ** (A ++ B)` "lrlr" [`A`;`A`] `Y` "A";;
+joindemo [`X`] `(A ++ B) ** (A ++ B)` "lrlr" [`A ++ B`] `Y` "A ++ B";;
+joindemo [`X`] `(A ++ B) ** (A ++ B)` "lrlr" [`A ++ B`;`A`] `Y` "A ++ B";;
+joindemo [`X`] `(A ++ B) ** ((A ** C) ++ B)` "lrlr" [`A ++ B`;`A`;`C`] `Y` "A ++ B";;
+joindemo [`X`] `(A ++ B) ** ((A ** C) ++ B)` "lrlr" [`A ++ B`;`A`] `Y` "A ++ B";;
 
-joindemo [`X`] `(C ++ A ++ B)` "rlr" [`A ++ B`] `Y` "NEG (A ++ B)";;
-joindemo [`X`] `(A ++ B ++ C)` "lr" [`A ++ B`] `Y` "NEG (A ++ B)";;
-join (demopname () "R") "rlr" (demopname () "Q") "NEG (A ++ B)";;
+joindemo [`X`] `(C ++ A ++ B)` "rlr" [`A ++ B`] `Y` "A ++ B";;
+joindemo [`X`] `(A ++ B ++ C)` "lr" [`A ++ B`] `Y` "A ++ B";;
+join (demopname () "R") "rlr" (demopname () "Q") "A ++ B";;
 store "_Step0" (demopname () "S");;
 
-joindemo [`X`] `(A ** B) ++ (C ** D)` "lrlr" [`A`;`B`;`C`] `Y` "NEG A";;
+joindemo [`X`] `(A ** B) ++ (C ** D)` "lrlr" [`A`;`B`;`C`] `Y` "A";;
 
 
-joindemo [`X`] `A ** B` "lr" [`(A ** B) ++ E`] `Y` "NEG ((A ** B) ++ E)";;
-joindemo [`X`] `A` "" [`(A ** B) ++ E`] `Y` "NEG ((A ** B) ++ E)";;
+joindemo [`X`] `A ** B` "lr" [`(A ** B) ++ E`] `Y` "(A ** B) ++ E";;
+joindemo [`X`] `A` "" [`(A ** B) ++ E`] `Y` "(A ** B) ++ E";;
 errordemo [`X`;`B`] `Y` ;;
-joindemo [`X`] `A ** B` "lr" [`(C ** A) ++ E`] `Y` "NEG ((C ** A) ++ E)";;
+joindemo [`X`] `A ** B` "lr" [`(C ** A) ++ E`] `Y` "(C ** A) ++ E";;
 errordemo [`X`;`C`] `Y ** B` ;;
 
 

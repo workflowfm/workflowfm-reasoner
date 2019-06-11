@@ -369,8 +369,15 @@ module Clltactics =
       let inputsl = find_input_terms conl 
       and inputsr = find_input_terms conr in
 
-      let find_sel sel input = string_matches_term sel ((rand o rator) input) in
-      
+      let find_sel sel = (* string_matches_term sel ((rand o rator) input) in *)
+        try ( 
+          let tm = parse_term sel in
+          let tm' = if (is_llneg tm) then tm
+                    else mk_llneg (try_type `:LinProp` tm) in
+          fun input -> tm' = (rand o rator) input
+        )
+	    with Failure _ -> failwith ("WITH_TAC: Failed to parse term `"^sel^"`") in
+	    
       let rh,rinputs = try ( remove (find_sel act.Action.rsel) inputsr ) 
 		               with Failure _ -> failwith ("WITH_TAC: Input `"^act.Action.rsel^"` not found in: " 
 						                           ^ (string_of_term conr)) 
@@ -898,9 +905,12 @@ module Clltactics =
 	  let out = find_output (concl thml)
 	  and inlist = (find_input_terms o concl) thmr
 	  and inputs = (list_mk_munion o (map mk_msing) o find_input_terms o concl) thml in
-	  let primary = try ( parse_term act.Action.rsel )
+	  let primary = try ( 
+                      let tm = parse_term act.Action.rsel in
+                      if (is_llneg tm) then tm 
+                      else mk_llneg (try_type `:LinProp` tm)
+                    )
 	                with Failure _ -> failwith ("JOIN_TAC: Failed to parse term `"^act.Action.rsel^"`") in
-	  let primary = if (is_llneg primary) then primary else mk_llneg primary in
 	  
 	  let cuttac glfrees cut lbl =
 	    Actionstate.CLL_TAC (drule_seqtac ~lbl:lbl ~reslbl:act.Action.res ~glfrees:glfrees
