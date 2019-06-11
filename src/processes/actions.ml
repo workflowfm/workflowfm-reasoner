@@ -72,9 +72,14 @@ module Actionstate = struct
   let add_merged tm (cl,cr) s =
     ({ s with merged = (tm,string_of_term cl,string_of_term cr) :: s.merged }:t)
 
-  let get_merge chan s = 
+  let get_lmerge chan s = 
     let str = string_of_term chan in
-    let search (tm,l,r) = l = str || r = str in
+    let search (tm,l,_) = l = str in
+    find search s.merged
+
+  let get_rmerge chan s = 
+    let str = string_of_term chan in
+    let search (tm,_,r) = r = str in
     find search s.merged
  	      
   let add_prov n p s =

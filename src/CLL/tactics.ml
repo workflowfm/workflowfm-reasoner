@@ -403,19 +403,28 @@ module Clltactics =
         remove_props' lins rins [] [] in
                 
       (* Filter the left input to match the right or vice versa *)
-      let matchInputTac inputl inputr =
+      let matchInputTac inputl inputr originputs =  
+        let TAG_MERGED_TAC lbl chans st (asl,_) = 
+          let thm = try ( assoc lbl asl )
+	                with Failure _ -> failwith ("WITH_TAC: Failed to find filtered assumption: " ^ lbl) in
+	      let newinputs = (find_input_terms o concl) thm in
+          let merged = remove_list newinputs originputs in
+          if (length merged = 1) 
+          then ALL_ETAC (Actionstate.add_merged (hd merged) chans st) gl 
+          else failwith ("WITH_TAC: Failed to find filtered channel: " ^ lbl) in
 	    EORELSE
-	      (fun st ->
-            FILTER_TAC ~glfrees:glfrees act.Action.larg inputl ((rand o rand o rator) inputr) true
-              (Actionstate.add_merged inputr (rand inputl, rand inputr) st))
-	      (fun st -> 
-            FILTER_TAC ~glfrees:glfrees act.Action.rarg inputr ((rand o rand o rator) inputl) true
-              (Actionstate.add_merged inputl (rand inputl, rand inputr) st))
+	      (ETHEN
+             (FILTER_TAC ~glfrees:glfrees act.Action.larg inputl ((rand o rand o rator) inputr) true)
+             (TAG_MERGED_TAC act.Action.larg (rand inputl, rand inputr)))
+	      (ETHEN
+             (FILTER_TAC ~glfrees:glfrees act.Action.rarg inputr ((rand o rand o rator) inputl) true)
+             (TAG_MERGED_TAC act.Action.rarg (rand inputl, rand inputr)))
       in
       
       (* Match inl with any of the inputsr via filtering *)
       let matchInputWithAnyTac inl inputsr =
-	    let filter_tacs = map (fun i -> matchInputTac inl i) inputsr in 
+        let rchans = map rand inputsr in 
+	    let filter_tacs = map (fun i -> matchInputTac inl i rchans) inputsr in 
 	    EFIRST filter_tacs in
 
       (* Add buffers for any extra inputs that were not matched *)
@@ -474,7 +483,7 @@ module Clltactics =
              (* In the next iteration, hl will match with another input and will be removed by remove_props *)
 	         (ETHEN (matchInputWithAnyTac hl rins) (
                   fun st ->
-                  let _,rins' = remove_chan (Actionstate.get_merge (rand hl) st) rins in
+                  let _,rins' = remove_chan (Actionstate.get_lmerge (rand hl) st) rins in
                   matchInputsTac restl rins' extrasl extrasr st
              ))
              (* If that fails, hl does not have a match, so add it as an extra and keep going *)
@@ -537,7 +546,7 @@ module Clltactics =
       ) in *)
 
       let matched,lins,rins = remove_props linputs rinputs in
-      let merge (l,r) s = Actionstate.add_merged ((rand o rator) l) (rand l, rand r) s in
+      let merge (l,r) s = Actionstate.add_merged  l (rand l, rand r) s in
       let res = (mk_llneg o list_mk_comb) (`LinPlus`,[(rand o rand o rator) lh;(rand o rand o rator) rh]) in
       let st' = itlist merge matched (Actionstate.add_merged res (rand lh, rand rh) st) in
 
