@@ -2193,3 +2193,6 @@ module Piviz = Piviz_make (Console.Composer);;
 let Console.Composer.Response.Deploy (_,myl) = Piviz.deploy (get "R1") [ get "P1" ; get "Q1" ] ;;
 (print_string o snd3 o hd) l;;
 
+create "P" [`X`;`Y++Z`] `A` ;;
+create "Q" [`W`;`Z++Y`] `A` ;;
+cwith "P" "X" "Q" "W";;

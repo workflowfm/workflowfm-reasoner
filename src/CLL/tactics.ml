@@ -402,16 +402,21 @@ module Clltactics =
 	                  with Failure _ ->
 	                    remove_props' t rins (l::lrest) removed in
         remove_props' lins rins [] [] in
-                                                                            
+                
+      (* Remove a channel that was merged *)
+      let remove_chan (_,_,chan) ins = 
+        let check tm = (string_of_term o rand) tm = chan in
+        remove check ins in
+                                                            
       (* Filter the left input to match the right or vice versa *)
       let matchInputTac inputl inputr =
 	    EORELSE
 	      (fun st ->
             FILTER_TAC ~glfrees:glfrees act.Action.larg inputl ((rand o rand o rator) inputr) true
-              (Actionstate.add_merged ((rand o rand o rator) inputr) (rand inputl, rand inputr) st))
+              (Actionstate.add_merged inputr (rand inputl, rand inputr) st))
 	      (fun st -> 
             FILTER_TAC ~glfrees:glfrees act.Action.rarg inputr ((rand o rand o rator) inputl) true
-              (Actionstate.add_merged ((rand o rand o rator) inputl) (rand inputl, rand inputr) st))
+              (Actionstate.add_merged inputl (rand inputl, rand inputr) st))
       in
       
       (* Match inl with any of the inputsr via filtering *)
@@ -468,7 +473,11 @@ module Clltactics =
              (* Try to match the first input on the left with one on the right *)
              (* If that succeeds, keep going without adding any extras *)
              (* In the next iteration, hl will match with another input and will be removed by remove_props *)
-	         (ETHEN (matchInputWithAnyTac hl rins) (matchInputsTac restl rins extrasl extrasr))
+	         (ETHEN (matchInputWithAnyTac hl rins) (
+                  fun st ->
+                  let _,rins' = remove_chan (Actionstate.get_merge (rand hl) st) rins in
+                  matchInputsTac restl rins' extrasl extrasr st
+             ))
              (* If that fails, hl does not have a match, so add it as an extra and keep going *)
              (* This time it will be removed by remove_list *)
 	         (matchInputsTac restl rins (hl :: extrasl) extrasr)
@@ -496,10 +505,6 @@ module Clltactics =
 	    let outl = find_output conl
 	    and outr = find_output conr in
 
-        (*	let llma s gl' =
-	  let mvs = (subtract (gl_frees gl') (gl_frees gl)) @ (get_ll_channels (concl thml)) @ (get_ll_channels (concl thmr)) in
-	  Cll.ll_meta_lbl_asm act.Action.rarg mvs gl',s in *)
-
 	    let tac =
 	      if (outl = outr) then
 	        ETHEN (
@@ -521,7 +526,6 @@ module Clltactics =
 		               (`D:LinProp`,outr)]
 		              Rules.ll_with_outputs))
 		      (Actionstate.ADD_PROV_TAC act.Action.res (provplus (prov_of_tm ("&" ^ act.Action.res) outl) (prov_of_tm ("&" ^ act.Action.res) outr))) in
-        (*	  (Actionstate.UPDATE_PROV_TAC (plusprov act.Action.larg act.Action.rarg act.Action.res)) in *)
 	    ETHENL tac [ Actionstate.CLL_TAC (prove_by_seq act.Action.rarg) ; ETAC (REMOVE_TAC act.Action.rarg) ] st gl in
 
       (*let _ = (print_string act.Action.res ; print_newline();
