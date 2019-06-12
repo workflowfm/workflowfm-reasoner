@@ -135,9 +135,13 @@ joindemo [`X`] `(A ** B) ++ (C ** D)` "lrlr" [`A`;`B`;`C`] `Y` "A";;
 
 
 joindemo [`X`] `A ** B` "lr" [`(A ** B) ++ E`] `Y` "(A ** B) ++ E";;
-joindemo [`X`] `A` "" [`(A ** B) ++ E`] `Y` "(A ** B) ++ E";;
+try (
+  joindemo [`X`] `A` "" [`(A ** B) ++ E`] `Y` "(A ** B) ++ E"
+) with _ -> ();;
 errordemo [`X`;`B`] `Y` ;;
-joindemo [`X`] `A ** B` "lr" [`(C ** A) ++ E`] `Y` "(C ** A) ++ E";;
+try (
+  joindemo [`X`] `A ** B` "lr" [`(C ** A) ++ E`] `Y` "(C ** A) ++ E"
+) with _ -> ();;
 errordemo [`X`;`C`] `Y ** B` ;;
 
 
