@@ -401,30 +401,38 @@ module Clltactics =
 	                  with Failure _ ->
 	                    remove_props' t rins (l::lrest) removed in
         remove_props' lins rins [] [] in
+
+      (* Find the newly created input and tag is as a merge *)
+      let TAG_MERGED_TAC lbl originputs tag st (asl,_) = 
+        let thm = try ( assoc lbl asl )
+	              with Failure _ -> failwith ("WITH_TAC: Failed to find assumption: " ^ lbl) in
+	    let newinputs = (find_input_terms o concl) thm in
+        let merged = subtract newinputs originputs in
+        if (length merged = 1) 
+        then ALL_ETAC (Actionstate.add_merged (hd merged) tag st) gl 
+        else failwith ("WITH_TAC: Failed to find filtered channel: " ^ lbl) in
+
                 
       (* Filter the left input to match the right or vice versa *)
-      let matchInputTac inputl inputr originputs =  
-        let TAG_MERGED_TAC lbl chans st (asl,_) = 
-          let thm = try ( assoc lbl asl )
-	                with Failure _ -> failwith ("WITH_TAC: Failed to find filtered assumption: " ^ lbl) in
-	      let newinputs = (find_input_terms o concl) thm in
-          let merged = remove_list newinputs originputs in
-          if (length merged = 1) 
-          then ALL_ETAC (Actionstate.add_merged (hd merged) chans st) gl 
-          else failwith ("WITH_TAC: Failed to find filtered channel: " ^ lbl) in
+      let matchInputTac inputl inputr st (asl,_ as gl) =  
+        let lthm = try ( assoc act.Action.larg asl )
+	               with Failure _ -> failwith ("WITH_TAC: Failed to find assumption: " ^ act.Action.larg )
+        and rthm = try ( assoc act.Action.rarg asl )
+	               with Failure _ -> failwith ("WITH_TAC: Failed to find assumption: " ^ act.Action.rarg ) in
+	    let inputsl = (find_input_terms o concl) lthm
+        and inputsr = (find_input_terms o concl) rthm in
 	    EORELSE
 	      (ETHEN
              (FILTER_TAC ~glfrees:glfrees act.Action.larg inputl ((rand o rand o rator) inputr) true)
-             (TAG_MERGED_TAC act.Action.larg (rand inputl, rand inputr)))
+             (TAG_MERGED_TAC act.Action.larg inputsl (rand inputl, rand inputr)))
 	      (ETHEN
              (FILTER_TAC ~glfrees:glfrees act.Action.rarg inputr ((rand o rand o rator) inputl) true)
-             (TAG_MERGED_TAC act.Action.rarg (rand inputl, rand inputr)))
+             (TAG_MERGED_TAC act.Action.rarg inputsr (rand inputl, rand inputr))) st gl
       in
       
       (* Match inl with any of the inputsr via filtering *)
       let matchInputWithAnyTac inl inputsr =
-        let rchans = map rand inputsr in 
-	    let filter_tacs = map (fun i -> matchInputTac inl i rchans) inputsr in 
+	    let filter_tacs = map (fun i -> matchInputTac inl i) inputsr in 
 	    EFIRST filter_tacs in
 
       (* Add buffers for any extra inputs that were not matched *)
@@ -510,6 +518,8 @@ module Clltactics =
 	    and thmr = try ( assoc act.Action.rarg asl ) with Failure _ -> failwith ("WITH_TAC") in
 	    let conl = concl thml
 	    and conr = concl thmr in
+        let lins = find_input_terms conl
+        and rins = find_input_terms conr in
 	    let outl = find_output conl
 	    and outr = find_output conr in
 
@@ -534,7 +544,13 @@ module Clltactics =
 		               (`D:LinProp`,outr)]
 		              Rules.ll_with_outputs))
 		      (Actionstate.ADD_PROV_TAC act.Action.res (provplus (prov_of_tm ("&" ^ act.Action.res) outl) (prov_of_tm ("&" ^ act.Action.res) outr))) in
-	    ETHENL tac [ Actionstate.CLL_TAC (prove_by_seq act.Action.rarg) ; ETAC (REMOVE_TAC act.Action.rarg) ] st gl in
+	    ETHEN 
+          (ETHENL tac [ 
+               Actionstate.CLL_TAC (prove_by_seq act.Action.rarg) ; 
+               ETAC (REMOVE_TAC act.Action.rarg) 
+          ])
+          (TAG_MERGED_TAC act.Action.res (lins @ rins) (rand lh, rand rh))
+          st gl in
 
       (*let _ = (print_string act.Action.res ; print_newline();
 	       print_string "A:LinProp > "; print_term ((rand o rand o rator) lh); print_newline();
@@ -547,14 +563,14 @@ module Clltactics =
 
       let matched,lins,rins = remove_props linputs rinputs in
       let merge (l,r) s = Actionstate.add_merged  l (rand l, rand r) s in
-      let res = (mk_llneg o list_mk_comb) (`LinPlus`,[(rand o rand o rator) lh;(rand o rand o rator) rh]) in
-      let st' = itlist merge matched (Actionstate.add_merged res (rand lh, rand rh) st) in
+      let st' = itlist merge matched st in
 
       EEVERY ([
 	        (ETAC (COPY_TAC (act.Action.rarg,"_right_")));
 	        (ETAC (COPY_TAC (act.Action.larg,"_left_")));
             matchInputsTac lins rins [] [];
 	        matchOutputTac;
+            PRINT_ETAC;
 	        withTac;
 	        ETRY (ETAC (REMOVE_TAC act.Action.rarg));
 	        ETRY (ETAC (REMOVE_TAC act.Action.larg));

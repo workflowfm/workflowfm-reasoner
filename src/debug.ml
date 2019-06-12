@@ -2196,3 +2196,6 @@ let Console.Composer.Response.Deploy (_,myl) = Piviz.deploy (get "R1") [ get "P1
 create "P" [`X`;`Y++Z`] `A` ;;
 create "Q" [`W`;`Z++Y`] `A` ;;
 cwith "P" "X" "Q" "W";;
+
+let PRINT_ETAC st gl = 
+  Actionstate.print st; print_goal gl; ALL_ETAC st gl;;
