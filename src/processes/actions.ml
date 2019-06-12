@@ -81,7 +81,11 @@ module Actionstate = struct
     let str = string_of_term chan in
     let search (tm,_,r) = r = str in
     find search s.merged
- 	      
+ 	    
+  let inst_merge i s =
+    let imerge (tm,l,r) = instantiate i tm,l,r in
+    ({ s with merged = map imerge s.merged } :t)
+  
   let add_prov n p s =
     ({ s with prov = assoc_add n p s.prov }:t)
 
