@@ -19,15 +19,18 @@ loads (!serv_dir ^ "pap/pap.ml");;
 
 Cllpi.hide_procs();;
 
-module Clltac = Clltactics(Cllpi);;
 module Proc = Process(Cllpi);;
 
 
-(* = Initialisation = *)
+(* = Load Actions = *)
 
+module Clltac = Clltactics(Cllpi);;
 Action.add "JOIN" Clltac.JOIN_TAC;;
 Action.add "TENSOR" Clltac.TENSOR_TAC;;
 Action.add "WITH" Clltac.WITH_TAC;;
+
+
+(* = Initialisation = *)
 
 type_invention_warning := false;;
 

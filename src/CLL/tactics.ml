@@ -403,15 +403,15 @@ module Clltactics =
         remove_props' lins rins [] [] in
 
       (* Find the newly created input and tag is as a merge *)
-      let TAG_MERGED_TAC lbl originputs tag st (asl,_) = 
+      let TAG_MERGED_TAC lbl originputs tag st (asl,_ as gl) = try (
         let thm = try ( assoc lbl asl )
 	              with Failure _ -> failwith ("WITH_TAC: Failed to find assumption: " ^ lbl) in
 	    let newinputs = (find_input_terms o concl) thm in
         let merged = subtract newinputs originputs in
         if (length merged = 1) 
         then ALL_ETAC (Actionstate.add_merged (hd merged) tag st) gl 
-        else failwith ("WITH_TAC: Failed to find filtered channel: " ^ lbl) in
-
+        else failwith ("WITH_TAC: Failed to find filtered channel: " ^ lbl)
+        ) with Failure s -> (warn true s ; failwith s) in
                 
       (* Filter the left input to match the right or vice versa *)
       let matchInputTac inputl inputr st (asl,_ as gl) =  
@@ -570,7 +570,6 @@ module Clltactics =
 	        (ETAC (COPY_TAC (act.Action.larg,"_left_")));
             matchInputsTac lins rins [] [];
 	        matchOutputTac;
-            PRINT_ETAC;
 	        withTac;
 	        ETRY (ETAC (REMOVE_TAC act.Action.rarg));
 	        ETRY (ETAC (REMOVE_TAC act.Action.larg));

@@ -2197,5 +2197,16 @@ create "P" [`X`;`Y++Z`] `A` ;;
 create "Q" [`W`;`Z++Y`] `A` ;;
 cwith "P" "X" "Q" "W";;
 
+create "P" [`X`] `A` ;;
+create "Q" [`W`] `A` ;;
+cwith "P" "X" "Q" "W";;
+
 let PRINT_ETAC st gl = 
   Actionstate.print st; print_goal gl; ALL_ETAC st gl;;
+
+     inputs =
+      [(`X ++ W`, `c_Step6___Step6__x7`); (`Z ++ Y`, `cQ_lB_Z_Plus_Y_rB_2`)]
+        merged =
+     [(`NEG (X ++ W) <> c_Step6___Step6__x7`, "cP_X_1", "cQ_W_1");
+      (`NEG (Z ++ Y) <> c_Step6___Step6__b1`, "cP_lB_Y_Plus_Z_rB_2",
+       "cQ_lB_Z_Plus_Y_rB_2")];
