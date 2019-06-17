@@ -124,9 +124,9 @@ let scala_stateful_proc depth (proc:Proc.t) =
   common ^
   "override val dependencies = Seq(" ^ (String.concat "," (map mk_depparam deps)) ^ ")\n" ^ (nltab (depth + 1)) ^
   "override val body = " ^ (scala_of_pat (rhs proc.Proc.proc)) ^ (nltab (depth + 1)) ^ (nltab (depth + 1)) ^
-  "def apply(" ^(String.concat "," (map mk_arg intypes))^")(implicit executor:FutureExecutor): Future["^outtype^"] = {" ^ (nltab (depth + 2)) ^
-  "implicit val context:ExecutionContext = executor.context" ^ (nltab (depth + 2)) ^  
-   "executor.execute(this,Seq("^(String.concat "," (map String.uncapitalize intypes))^")).flatMap(_ map(_.asInstanceOf["^outtype^"]))" ^ (nltab (depth + 1)) ^
+  "def apply(" ^(String.concat "," (map mk_arg intypes))^")(implicit executor:ProcessExecutor[_]): Future["^outtype^"] = {" ^ (nltab (depth + 2)) ^
+  "implicit val context:ExecutionContext = executor.executionContext" ^ (nltab (depth + 2)) ^  
+   "executor.execute(this,Seq("^(String.concat "," (map String.uncapitalize intypes))^")).map(_.asInstanceOf["^outtype^"])" ^ (nltab (depth + 1)) ^
   "}" ^ (nltab depth) ^				   
   "}";;
 
@@ -184,7 +184,7 @@ let scala_stateful_main separator path package project proc deps =
        (itlist (^) (map scala_atomic_inst atomic) (nltab 2)) ^
        (itlist (^) (map scala_composite_inst composite) (nltab 2)) ^
        (scala_composite_inst proc) ^ (nltab 2) ^ 
-       "implicit val executor:FutureExecutor = SimpleProcessExecutor()\n" ^ (nltab 2) ^
+       "implicit val executor:ProcessExecutor[_] = new MultiStateExecutor("^(String.uncapitalize proc.Proc.name)^".allDependencies:_*)\n" ^ (nltab 2) ^
        "// TODO: Provide actual parameters:" ^ (nltab 2) ^
        "val result = Await.result("^(String.uncapitalize proc.Proc.name)^"( "^(string_comma_list params)^" ),30.seconds)" ^ (nltab 1) ^
        "}" ^ (nltab 0) ^
