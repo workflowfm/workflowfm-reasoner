@@ -161,7 +161,7 @@ In our [[https://github.com/PetrosPapapa/WorkflowFM-composer][current composer i
 The issue of [[OutputMerge][merged options in output provenance]] needs to be dealt with in input provenance too. 
 
 Let's revisit the same example:
-[[./SimplestMerge.png]] 
+[[./images/SimplestMerge.png]] 
 
 As we are joining ~P~ and ~Q~, the reasoner construct an optional input ~A ⊕ E~ for ~Q~ using its existing input ~E~ and introducing a buffer of type ~A~. Once the new input is constructed, we need to provide its input provenance. This must be such that ~E~ gets connected to ~Q~, whereas ~A~ is connected to the merge node.
 
