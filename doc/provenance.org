@@ -62,3 +62,37 @@ A  ⊕      P1 P2
    | \      
    C  D   
 #+END_EXAMPLE
+
+* Output Provenance
+
+Each process may only have a single, possibly composite output. When composing processes, the output of the composition often consists of parts of the outputs of its components.
+
+In our example above, ~P~ has output ~A ⊗ (C ⊕ D)~ consisting of ~A~ coming from ~P1~ and ~C ⊕ D~ coming from ~P2~. This is exactly what the provenance tree represents.
+
+The output provenance tree of each process is stored in its structure and used during composition. It is also copied as an output provenance entry, which maps each process name to its output provenance, in the composition state. This allows the composition tactics to gain access to that information.
+
+Apart from names of component processes who own part of the output, the leaves of an output provenance tree may have special values as described next.
+
+** The ~&~ prefix
+
+Provenance leaves starting with a ~&~ prefix indicate a "merge node" as the source of the output.
+
+When using ~WITH~ and in some cases of optional outputs in ~JOIN~ we need to introduce a "merge node" to indicate that 2 (or more) outputs are merged into a single (usually optional) output. This is one way of showing how the options come together, without showing disconnected outputs from different processes. 
+
+Outputs coming out of such a merge node can no longer be linked back to the components they came from without breaking the correlation between the options. 
+
+In other cases, two equivalent options are merged into a single output as an "optimization" step to avoid redundant case splits. A merge node is also used here, and the merged output has an unclear (double?) provenance.
+
+In such cases we mark the provenance of the new output using ~&~ followed by the name of the composition that introduced the merge node.
+
+* Input Provenance
+
+Each process can have multiple inputs, each with its own unique channel. This means we can generally track the owner of an input through the channel. 
+
+The composition actions only affect input channels in 2 ways:
+1. The ~WITH~ action constructs new inputs that are options or merges of other inputs. These are reported in the composition step and their provenance is linked to the composite process, not its components.
+2. The ~JOIN~ action manipulates inputs in order to match the output of the other (left) component. This includes adding buffers, using inputs from different components and merging options. In this case, we need to track the provenance of each part in the constructed input.
+
+The different types of input provenance are described next.
+
+** The ~#~ Provenance
