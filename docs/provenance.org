@@ -73,7 +73,7 @@ The output provenance tree of each process is stored in its structure and used d
 
 Apart from names of component atomic (or collapsed composite) processes who own part of the output, the leaves of an output provenance tree may have special values as described next.
 
-** The ~&~ prefix
+** <<OutputMerge>>The ~&~ prefix
 
 Provenance leaves starting with a ~&~ prefix indicate a "merge node" as the source of the output.
 
@@ -82,6 +82,13 @@ When using ~WITH~ and in some cases of optional outputs in ~JOIN~ we need to int
 Outputs coming out of such a merge node can no longer be linked back to the components they came from without breaking the correlation between the options. 
 
 In other cases, two equivalent options are merged into a single output as an "optimization" step to avoid redundant case splits. A merge node is also used here, and the merged output has an unclear (double?) provenance.
+
+Perhaps the simplest example is shown below:
+[[./images/SimplestMerge.png]]
+
+In this, the second option ~E~ of ~P~ is converted to the type of the first option ~A~ through ~Q~. This fits the intuition of a recovery process that recovers from an exception ~E~ to produce an expected ~A~. The result of the composition is a single ~A~ output, whether it came from ~P~ in the first place or from ~Q~ after "recovery". 
+
+If ~A~ gets connected to another process, whether the source will be ~P~ or ~Q~ is only determined at runtime. We therefore use the ~&~ merge node and label the output provenance to represent that the ~A~ output will be coming from this particular merge node.
 
 In such cases we mark the provenance of the new output using ~&~ followed by the name of the composition that introduced the merge node.
 
@@ -128,8 +135,42 @@ Note that the leaves of an input provenance tree, in principle, contain channels
 
 There are a few particularities and special cases of leaves for input provenance, which we describe next.
 
-** Disambiguating same channels
+** Disambiguating same channels with a ~:~ tag
+
+Assume a process ~Q~ with an input ~A ⊕ B~ on channel ~cQ~. In the image shown below, we ~TENSOR~ ~Q~ with itself and then ~JOIN~ it with a process ~P~ with output ~(A ⊕ B) ⊗ (A ⊕ B)~:
+[[./images/SameChannelJoin.png]]
+
+As we are joining ~P~ to the the 2 ~Q~ processes, the reasoner will apply the par rule to compose the 2 ~A ⊗ B~ inputs into one that matches the output of ~P~. Sticking to the explanation of input provenance we provided above, the input provenance for the composite input will be ~(cQ ⊕ cQ) ⊗ (cQ ⊕ cQ)~. 
+
+This would lead the graph engine to look for 4x ~cQ~ channels and fail because there are only 2 available, one for each instance of ~Q~. The reasoner needs to somehow convey the information that the first 2 ~cQ~ channels in the provenance tree refer to the *same* channel, whereas the other 2 ~cQ~ channels refer to a single other channel.
+
+This is accomplished by tagging each channel in the provenance tree with an integer. If 2 leaves in the provenance tree have the same channel *and* same number, they refer to the same, single channel. If hey have the same channel name, but a different number, they refer to 2 separate instances of that channel. Note that the actual number used has no other significance and is merely linked to an internal proof counter.
+
+In our example, the reasoner will report an input provenance ~(cQ:4 ⊕ cQ:4) ⊗ (cQ:7 ⊕ cQ:7)~ (or some other numbers instead of 4 and 7). This is how the graph engine that generated the image above knew how to connect one ~A~ and one ~B~ to the top ~Q~, corresponding to channel ~cQ:4~, and the other ~A~ and the other ~B~ to the second ~Q~, corresponding to channel ~cQ:7~.
 
 ** The ~#~ provenance 
 
+In some cases, an input being connected does not feed to any (atomic) process, but belongs to a buffer that is introduced. Such an input will be forwarded to the output of the composite process without change. 
+
+The reasoner reports the input provenance of such buffers using a hash ~#~ label for the leaf. 
+
+In our [[https://github.com/PetrosPapapa/WorkflowFM-composer][current composer implementation]], we use a triangle "join" (or "terminator") node as a target to connect buffered resources to.
+
 ** The ~&~ prefix
+
+The issue of [[OutputMerge][merged options in output provenance]] needs to be dealt with in input provenance too. 
+
+Let's revisit the same example:
+[[./SimplestMerge.png]] 
+
+As we are joining ~P~ and ~Q~, the reasoner construct an optional input ~A ⊕ E~ for ~Q~ using its existing input ~E~ and introducing a buffer of type ~A~. Once the new input is constructed, we need to provide its input provenance. This must be such that ~E~ gets connected to ~Q~, whereas ~A~ is connected to the merge node.
+
+The reported input provenance is ~&_Step1 ⊕ cQ:5~, where ~_Step1~ the name of the composition, ~cQ~ the input channel of ~Q~, and ~5~ some integer.
+
+* Future Work
+
+Further clarifying and simplifying the provenance information is an obvious want for the future.
+
+A few particularities exist because of the violation of channel uniqueness, so solving this problem in a more general way will help simplify provenance too. 
+
+Depending on further developments and needs of the frontend graph engine, we may extend provenance labels. The fact that the leaves can have any string as a label makes this structure very flexible and expandable.
