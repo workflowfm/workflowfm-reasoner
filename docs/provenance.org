@@ -4,7 +4,6 @@
 #+OPTIONS: toc:2
 #+EXCLUDE_TAGS: noexport
 
-
 * Example
 
 We begin with a motivating example to explain the purpose that provenance fulfils for the visualization of resource-based composition.
@@ -163,7 +162,7 @@ The issue of [[OutputMerge][merged options in output provenance]] needs to be de
 Let's revisit the same example:
 [[./images/SimplestMerge.png]] 
 
-As we are joining ~P~ and ~Q~, the reasoner construct an optional input ~A ⊕ E~ for ~Q~ using its existing input ~E~ and introducing a buffer of type ~A~. Once the new input is constructed, we need to provide its input provenance. This must be such that ~E~ gets connected to ~Q~, whereas ~A~ is connected to the merge node.
+As we are joining ~P~ and ~Q~, the reasoner constructs an optional input ~A ⊕ E~ for ~Q~ using its existing input ~E~ and introducing a buffer of type ~A~. Once the new input is constructed, we need to provide its input provenance. This must be such that ~E~ gets connected to ~Q~, whereas ~A~ is connected to the merge node.
 
 The reported input provenance is ~&_Step1 ⊕ cQ:5~, where ~_Step1~ the name of the composition, ~cQ~ the input channel of ~Q~, and ~5~ some integer.
 
@@ -174,3 +173,8 @@ Further clarifying and simplifying the provenance information is an obvious want
 A few particularities exist because of the violation of channel uniqueness, so solving this problem in a more general way will help simplify provenance too. 
 
 Depending on further developments and needs of the frontend graph engine, we may extend provenance labels. The fact that the leaves can have any string as a label makes this structure very flexible and expandable.
+
+# Local Variables:
+# org-latex-inputenc-alist: (("utf8" . "utf8x"))
+# eval: (setq org-latex-default-packages-alist (cons '("mathletters" "ucs" nil) org-latex-default-packages-alist))
+# End:
