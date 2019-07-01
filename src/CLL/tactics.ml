@@ -599,7 +599,7 @@ module Clltactics =
 	  
     let rec INPUT_TAC': term list -> term option -> term list -> string list option -> bool -> term -> provtree -> string -> string -> astactic =    
       fun glfrees primary inchans priority or_left target prov lbl joinlbl st (asl,_ as gl) ->
-      (* 	print_goal gl;
+       	(*print_goal gl;
 	print_newline ();
 	print_string "INPUT_TAC' ";
 	(match primary with
@@ -616,10 +616,10 @@ module Clltactics =
 	print_term target ;
 	print_string " " ;
 	print_string lbl ;
-	print_newline () ; *)
-
+	print_newline () ; 
+    *)
       let matchInputTac lbl priority inputs target elsetac st (asl,w as gl) =
-        (*	print_string "Inputs: ";
+    	(*print_string "Inputs: ";
 	print_tml inputs;
 	print_newline ();
 	print_string "Target: ";
@@ -660,11 +660,11 @@ module Clltactics =
 	       (* Try them all, else use elsetac. *)
 	       EFIRST (filter_tacs @ [elsetac]) (Actionstate.inc 1 st) gl in (* We could buffer missing inputs here, but it will get confusing. *)
 
-      let isOrigInput inchans input = mem (rand input) inchans in 
+      let origInputs channels inputs = filter_once (fun x y -> x = rand y) channels inputs in 
       
       let thm = try (assoc lbl asl)
 	            with Failure _ -> failwith ("INPUT_TAC: Failed to find process: " ^ lbl) in
-      let ins = ((filter (isOrigInput inchans)) o find_input_terms o concl) thm 
+      let ins = (origInputs inchans o find_input_terms o concl) thm 
       and out = find_output (concl thm) in
       
       if (is_var target or is_const target) then
@@ -708,7 +708,7 @@ module Clltactics =
 	      let sidePrepTac primary inchans p or_left target prov st (asl,w as gl) =
 	        let thm = try (assoc lbl asl)
 	                  with Failure _ -> failwith ("INPUT_TAC: Failed to find process: " ^ lbl) in
-	        let ins = ((filter (isOrigInput inchans)) o find_input_terms o concl) thm in
+	        let ins = (origInputs inchans o find_input_terms o concl) thm in
 	        let tac = INPUT_TAC' glfrees primary inchans p or_left target prov lbl joinlbl in
 	        matchInputTac lbl p ins target tac st gl in
 	      

@@ -2185,6 +2185,7 @@ Json_composer_io.execute "{\"command\":\"ping\",\"ping\":0.2}";;
 
 run_file (!serv_dir ^ "../examples/toy.ml");;
 run_example "toy";;
+run_example "demo";;
 
 
 Console.Composer.Process.compose1 (Action.create "WITH" "P1" "NEG X" "Q1" "NEG Y" "_StepX") (get "P1") (get "Q1");;
@@ -2209,3 +2210,27 @@ let PRINT_ETAC st gl =
   Actionstate.print st; print_goal gl; ALL_ETAC st gl;;
 
 
+loads "workflowfm/src/make.console.ml";;
+create "P" [`X`] `A ** A ** A ** A` ;;
+create "Q" [`A`;`A`] `Y` ;;
+tensor "Q" "Q";;
+module Clltac = Clltactics(Cllpi);;
+Action.add "JOIN" Clltac.JOIN_TAC;;
+Action.add "TENSOR" Clltac.TENSOR_TAC;;
+Action.add "WITH" Clltac.WITH_TAC;;
+join "P" "lr" "_Step0" "NEG A";; 
+get "_Step0";;
+
+let xchans = [`a:num`;`a:num`;`b:num`];;
+let xins = [`A1 <> (a:num)`;`A2  <> (a:num)`;`B1 <> (b:num)`;`B2 <> (b:num)`; `C <> (c:num)`];;
+let xisOrigInput' inchan input = (rand input) = inchan;;
+filter_once xisOrigInput' xchans xins ;;
+
+get "P35";;
+get "Q35";;
+join "P35" "lrlr" "Q35" "A ++ B";;
+
+filter_once xisOrigInput' [] xins;;
+let xorigInputs inputs = filter_once (fun x y -> x = rand y) xchans inputs;;
+xorigInputs xins;;
+let xchans = [];;
