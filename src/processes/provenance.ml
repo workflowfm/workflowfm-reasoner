@@ -34,38 +34,38 @@ let timesprov nl nr n pm =
   try (
     let pl = assoc nl pm
     and pr = assoc nr pm in
-    addmap n (provtimes pl pr) pm )
+    assoc_add n (provtimes pl pr) pm )
   with Failure _ -> pm;;
 
 let plusprov nl nr n pm =
   try (
     let pl = assoc nl pm
     and pr = assoc nr pm in
-    addmap n (provplus pl pr) pm )
+    assoc_add n (provplus pl pr) pm )
   with Failure _ -> pm;;
 
 let timesprov_r nl pr n pm =
   try (
     let pl = assoc nl pm in
-    addmap n (provtimes pl pr) pm )
+    assoc_add n (provtimes pl pr) pm )
   with Failure _ -> pm;;
 
 let timesprov_l pl nr n pm =
   try (
     let pr = assoc nr pm in
-    addmap n (provtimes pl pr) pm )
+    assoc_add n (provtimes pl pr) pm )
   with Failure _ -> pm;;
 
 let plusprov_r nl pr n pm =
   try (
     let pl = assoc nl pm in
-    addmap n (provplus pl pr) pm )
+    assoc_add n (provplus pl pr) pm )
   with Failure _ -> pm;;
 
 let plusprov_l pl nr n pm =
   try (
     let pr = assoc nr pm in
-    addmap n (provplus pl pr) pm )
+    assoc_add n (provplus pl pr) pm )
   with Failure _ -> pm;;
 
 

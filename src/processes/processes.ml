@@ -4,7 +4,7 @@
 (*                            Petros Papapanagiotou                          *)
 (*              Center of Intelligent Systems and their Applications         *)
 (*                           University of Edinburgh                         *)
-(*                                 2011 - 2015                               *)
+(*                                 2011 - 2019                               *)
 (* ========================================================================= *)
 
 (* Dependencies *)
@@ -21,6 +21,7 @@ sig
     name : string;
     inputs : (term * term) list;
     output : term * term;
+    prov : provtree;
     proc : term; (* TODO: remove this - keep only frees? *)
     actions : Action.t list;
     copier : bool;
@@ -34,7 +35,7 @@ sig
   val mk_proc_def : string -> term list -> term -> term
   val gen_proc : term -> term
   val get_proc_raw : t -> term
-  val get_atomic_prov : t -> (string * provtree)
+  val get_prov : t -> (string * provtree)
   val prove_subs : term list -> t -> thm
   val get_cll_def : t -> term
   val get_cll : t -> term
@@ -44,32 +45,35 @@ sig
   val check_copier : term list -> term -> bool
   val define :
     string ->
-    bool -> (term * term) list -> term * term -> term -> Action.t list -> t
+    bool -> 
+    (term * term) list -> 
+    term * term -> 
+    provtree ->
+    term -> 
+    Action.t list -> t
   val create : string -> term list -> term -> t
-  val from_cll : string -> bool -> Action.t list -> term -> t
-  val compose1 : Action.t -> Actionstate.t -> t -> t -> t * Actionstate.t
+  val from_cll : string -> bool -> Action.t list -> provtree option -> term -> t
+  val compose1 : Action.t -> t -> t -> t * Actionstate.t
   val prove :
-    Actionstate.t ->
+    string ->
     t list ->
     Action.t list ->
     string ->
     instantiation * thm * (Actionstate.t * t) list * Actionstate.t
   val compose :
-    Actionstate.t ->
     string ->
     t list ->
     Action.t list ->
     t * (Actionstate.t * t) list * Actionstate.t
 end;;
 
-module Process : functor (Cll : Cllproc_type) -> Process_type =
-(*module Process = *)
-  functor (Cll : Cllproc_type) ->
+module Process (Cll : Cllproc_type) : Process_type =
   struct
   type t = {
     name : string;
     inputs : (term * term) list;
     output : term * term;
+    prov : provtree;
     proc : term;
     actions : Action.t list;
     copier : bool;
@@ -135,10 +139,11 @@ module Process : functor (Cll : Cllproc_type) -> Process_type =
     (length inprops = 1 && inprops = outprops)
     ) with Failure _ -> false
 
-  let define name intermediate inputs output proc actions =
+  let define name intermediate inputs output prov proc actions =
     ({name = name; 
       inputs = inputs ;
       output = output ;
+      prov = prov ;
       proc = mk_proc_def name ((map snd inputs) @ [snd output]) proc ;
       actions = actions ;
       copier = check_copier (map fst inputs) (fst output) ;
@@ -149,10 +154,11 @@ module Process : functor (Cll : Cllproc_type) -> Process_type =
     let ins = map (try_type `:LinProp`) ins
     and out = try_type `:LinProp` out in
     let incs = Cll.linprops_to_chans ("c"^name) ins
-    and outc = Cll.linprop_to_chan ("o"^name) "" out in
+    and outc = Cll.linprop_to_chan ("o"^name) "" out 
+    and prov = prov_of_tm name out in
     let inpairs = zip ins incs in
     let proc = Cll.cll_to_proc (Cll.mk_cll_def_raw name inpairs (out,outc)) in
-    define name false inpairs (out,outc) proc []
+    define name false inpairs (out,outc) prov proc []
 
 
   let get_proc_deps proc =
@@ -165,10 +171,16 @@ module Process : functor (Cll : Cllproc_type) -> Process_type =
     let myfind tm = is_var tm && fast_type_test tm && type_test tm in
     find_terms myfind proc
 
-  let get_atomic_prov proc =
-    (proc.name,prov_of_tm proc.name (fst proc.output))
-      
-  let from_cll name intermediate actions cll =
+  let get_prov proc = (proc.name,proc.prov)
+  
+  let get_prov_from_state name state = 
+    try ( Some(assoc name state.Actionstate.prov) )
+    with Failure _ -> (
+      warn true ("State contains no output provenance for: " ^ name) ;
+      None
+    )
+ 
+  let from_cll name intermediate actions provenance cll =
     let proc = Cll.process_of_term cll in (* also does a sanity check *)
     (* let deps = map (fst o dest_var) (get_proc_deps proc) in *)
     let intms = find_input_terms cll
@@ -180,12 +192,16 @@ module Process : functor (Cll : Cllproc_type) -> Process_type =
       else rand lh,rh in
     let ins = map (desttm true) intms
     and out = desttm false outtm in
-    define name intermediate ins out proc actions
+    let prov = match provenance with
+      | Some (p) -> p
+      | None -> prov_of_tm name (fst out) in
+    define name intermediate ins out prov proc actions
 
  
-  let (compose1:Action.t -> Actionstate.t -> t -> t -> t * Actionstate.t) =
-    fun comp s lp rp ->
-    let tml = (gen_ll_channels o get_cll) lp
+  let (compose1 : Action.t -> t -> t -> t * Actionstate.t) =
+    fun comp lp rp ->
+    let state = Actionstate.set_prov [get_prov lp; get_prov rp] (Actionstate.create comp.Action.res)
+    and tml = (gen_ll_channels o get_cll) lp
     and tmr = (gen_ll_channels o get_cll) rp in
     
     let (gl:goal) = [],itlist (curry mk_imp) [tml;tmr] (genvar `:bool`) in
@@ -194,15 +210,17 @@ module Process : functor (Cll : Cllproc_type) -> Process_type =
       (* Ignoring metas (TODO: for now?) *)
       let (_,(asl,_)::_,_),s' =
 	EEVERY [
-  	  Actionstate.ASTAC (DISCH_THEN (META_SPEC_ALL_LABEL_TAC lp.name));
-	  Actionstate.ASTAC (DISCH_THEN (META_SPEC_ALL_LABEL_TAC rp.name));
-	  Action.apply comp] s gl in
-      (from_cll comp.Action.res true [comp] o concl) (assoc comp.Action.res asl),s')
+  	    Actionstate.ASTAC (DISCH_THEN (META_SPEC_ALL_LABEL_TAC lp.name));
+	    Actionstate.ASTAC (DISCH_THEN (META_SPEC_ALL_LABEL_TAC rp.name));
+	    Action.apply comp] state gl in    
+      let prov = get_prov_from_state comp.Action.res s' in
+      (from_cll comp.Action.res true [comp] prov o concl) (assoc comp.Action.res asl),s')
 
     
-  let prove state deps acts res =
+  let prove label deps acts res =
     print_string ("*** Composing: " ^ res) ; print_newline () ; reset_time() ;
-    let asms = map (gen_ll_channels o get_cll) deps
+    let state = Actionstate.set_prov (map get_prov deps) (Actionstate.create label)
+    and asms = map (gen_ll_channels o get_cll) deps
     and labels = map (fun x -> x.name) deps in
     let newvar = genvar `:bool` in
     let glvar = mk_undered_var [newvar] newvar in
@@ -222,7 +240,8 @@ module Process : functor (Cll : Cllproc_type) -> Process_type =
 	  let gst,st = hd gstack in
 	  let gst' = gst,Actionstate.reset st in
 	  let (newgst,newst) as res = eby (EVALID (Action.apply h)) gst' in
-	  let newproc = (from_cll h.Action.res true [h] o concl o
+      let newprov = get_prov_from_state h.Action.res newst in
+	  let newproc = (from_cll h.Action.res true [h] newprov o concl o
 			     assoc h.Action.res o
 			     fst o hd o snd3) newgst in
 	  print_string ("*** Action complete: " ^ (Action.string_of_act h) ^ " (" ^ (string_of_float (rget_time())) ^ ")")  ; print_newline ();
@@ -243,10 +262,11 @@ module Process : functor (Cll : Cllproc_type) -> Process_type =
     print_string ("*** Theorem reconstruction complete." ^ " (" ^ (string_of_float (rget_time())) ^ ")")  ; print_newline ();
     inst,thm,zip states procs,state'
 
-  let compose state name deps acts =
-    let inst,thm,inter,state' = prove state deps acts name in
+  let compose name deps acts =
+    let inst,thm,inter,state' = prove name deps acts name in
     let rescll = ((instantiate inst) o snd o strip_exists o concl o UNDISCH_ALL) thm in
-    from_cll name false acts rescll,rev inter,state'
+    let prov = get_prov_from_state name state' in
+    from_cll name false acts prov rescll,rev inter,state'
 
 (* TODO: Do a sanity check by matching dependencies from get_proc_deps with those inferred from the actions. *)
 				     

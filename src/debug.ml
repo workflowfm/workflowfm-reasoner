@@ -1,33 +1,34 @@
-let xcll = Proc.get_cll mypa;;
-  let xname = mypa.Proc.name;;
-  let xins = find_input_terms xcll
-  and xout = find_output_term xcll;; 
 
-  let xterm = (rhs o concl o (PURE_REWRITE_CONV[NEG_NEG;NEG_CLAUSES])) xcll;;
-  let xis_type x = (is_var x) && (type_of x = `:LinProp`);;
-  let xtypes = map ((fun x -> (String.lowercase x,x)) o fst o dest_var) (find_terms xis_type xcll);;
-  in ((scala_service_io depth types output) o (linterm_to_pi Cllpi.linprop_to_name)) term;;
+ xcll = Proc.get_cll mypa;;
+ let xname = mypa.Proc.name;;
+ let xins = find_input_terms xcll
+ and xout = find_output_term xcll;; 
 
-  let xtm = `(NEG A <> cPa_A_1:num)`;;
-let myf tm =
-  let chan = rand tm in
-  linprop_to_pi Cllpi.linprop_to_name (string_of_term chan ^ "_") chan `C:LinProp`;;
+ let xterm = (rhs o concl o (PURE_REWRITE_CONV[NEG_NEG;NEG_CLAUSES])) xcll;;
+ let xis_type x = (is_var x) && (type_of x = `:LinProp`);;
+ let xtypes = map ((fun x -> (String.lowercase x,x)) o fst o dest_var) (find_terms xis_type xcll);;
+ in ((scala_service_io depth types output) o (linterm_to_pi Cllpi.linprop_to_name)) term;;
 
-myf xtm;;
-  
-BufferBug
-  Optionals: A ++ B --> A ++ C ++ D
-    A ++ B ++ C --> A ++ B
-      A --> A ++ B
-	A ++ B --> A ++ C
-	  Ctrl - S
-	  notes
-	  "Create copy node" + different icon
-	  "Create join node" + different icon
-	  Several create process windows
-	  Load compositions into existing workspace
+ let xtm = `(NEG A <> cPa_A_1:num)` ;;
+             let myf tm =
+               let chan = rand tm in
+               linprop_to_pi Cllpi.linprop_to_name (string_of_term chan ^ "_") chan `C:LinProp` ;;
 
-	  
+                                                                                         myf xtm;;
+ 
+ BufferBug
+   Optionals: A ++ B --> A ++ C ++ D
+                                     A ++ B ++ C --> A ++ B
+                                                            A --> A ++ B
+	                                                                     A ++ B --> A ++ C
+	                                                                                       Ctrl - S
+	                                                                                                notes
+	                                                                                                "Create copy node" + different icon
+	                                                                                                                       "Create join node" + different icon
+	                                                                                                                                              Several create process windows
+	                                                                                                                                              Load compositions into existing workspace
+
+ 
 let explode_char s =
   let rec exap n l =
       if n < 0 then l else
@@ -83,11 +84,11 @@ let ascii_str s =
 
   
 linprops_to_chans (ascii_str o string_of_term) "c" [`A ** B`;`C ++ D`];;
-pr_cr (ascii_str o string_of_term) "P" [`A`;`B ++ C`] `D`;;
-pr_cr (ascii_str o string_of_term) "P" [`A ** B`;`C ++ D`] `E ** (F ++ G)`;;
+pr_cr (ascii_str o string_of_term) "P" [`A`;`B ++ C`] `D` ;;
+pr_cr (ascii_str o string_of_term) "P" [`A ** B`;`C ++ D`] `E ** (F ++ G)` ;;
 
-pr_cr (linprop_to_name) "P" [`A`;`B ++ C`] `D`;;
-pr_cr (linprop_to_name) "P" [`A ** B`;`C ++ D`] `E ** (F ++ G)`;;
+pr_cr (linprop_to_name) "P" [`A`;`B ++ C`] `D` ;;
+pr_cr (linprop_to_name) "P" [`A ** B`;`C ++ D`] `E ** (F ++ G)` ;;
 
   
 open Json_type.Browse;;
@@ -160,15 +161,9 @@ let xx = Json_io.json_of_string "{\"action\":{\"act\":\"JOIN\",\"larg\":\"_Step1
 (* ============================================================================= *)
 (* ============================================================================= *)
 
-let myst = Actionstate.create 0;;
-let rec add_provs procs st =
-    match procs with
-      | [] -> st
-      | p :: t ->
-	let n,prov = Proc.get_atomic_prov p in
-	add_provs t (Actionstate.add_prov n prov st);;
 let mycomp lbl procs acts =
-  let p,_,s = Proc.compose (add_provs procs myst) lbl procs acts in p,s;;
+  let p,_,s = Proc.compose lbl procs acts in p,s;;
+
 
 (* ============================================================================= *)
 (* ============================================================================= *)
@@ -188,25 +183,25 @@ let piki proc =
   let out_params = get_param out in
   in_params,out_params;;
 
-let mypa = Proc.create "Pa" [`X`] `A`;;
-let mypb = Proc.create "Pb" [`A`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `A` ;;
+let mypb = Proc.create "Pb" [`A`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "" "Pb" "(NEG A)" "R1";;
 mycomp "R1" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `A ** B`;;
-let mypb = Proc.create "Pb" [`A`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `A ** B` ;;
+let mypb = Proc.create "Pb" [`A`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "(NEG A)" "R1";;
 mycomp "R1" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `A ** B ** C`;;
-let mypb = Proc.create "Pb" [`A`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `A ** B ** C` ;;
+let mypb = Proc.create "Pb" [`A`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "(NEG A)" "R1";;
 mycomp "R1" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `A ** B ** C`;;
-let mypb = Proc.create "Pb" [`A`] `D`;;
-let mypc = Proc.create "Pc" [`B`] `E`;;
-let mypd = Proc.create "Pd" [`C`] `F`;;
+let mypa = Proc.create "Pa" [`X`] `A ** B ** C` ;;
+let mypb = Proc.create "Pb" [`A`] `D` ;;
+let mypc = Proc.create "Pc" [`B`] `E` ;;
+let mypd = Proc.create "Pd" [`C`] `F` ;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "(NEG A)" "R1";;
 let myact2 = Action.create "JOIN" "R1" "lrr" "Pc" "(NEG B)" "R2";;
 let myact3 = Action.create "JOIN" "R2" "r" "Pd" "(NEG C)" "Res";;
@@ -215,75 +210,75 @@ mycomp "R2" [mypa;mypb;mypc;mypd] [myact1;myact2];;
 mycomp "Res" [mypa;mypb;mypc;mypd] [myact1;myact2;myact3];;
 
 
-let mypa = Proc.create "Pa" [`A ++ C`;`B ++ (D ** E)`] `C ** (G ++ H)`;;
-let mypa = Proc.create "Pa" [`A`;`B`] `C ** D`;;
-let mypb = Proc.create "Pb" [`C`;`E`] `G`;;
-let mypc = Proc.create "Pc" [`D`;`G`] `H`;;
+let mypa = Proc.create "Pa" [`A ++ C`;`B ++ (D ** E)`] `C ** (G ++ H)` ;;
+let mypa = Proc.create "Pa" [`A`;`B`] `C ** D` ;;
+let mypb = Proc.create "Pb" [`C`;`E`] `G` ;;
+let mypc = Proc.create "Pc" [`D`;`G`] `H` ;;
 let myact1 = Action.create "JOIN" "Pa" "l" "Pb" "(NEG C)" "Res";;
 let myact2 = Action.create "JOIN" "Res" "r" "Pc" "(NEG D)" "Rez";;
-Proc.compose myst "Res" [mypa;mypb;mypc] [myact1];;
-Proc.compose myst "Rez" [mypa;mypb;mypc] [myact1;myact2];;
+Proc.compose "Res" [mypa;mypb;mypc] [myact1];;
+Proc.compose "Rez" [mypa;mypb;mypc] [myact1;myact2];;
 (* xxx Provenance? *)
 
-let mypa = Proc.create "Pa" [`A`;`B`] `C ** D`;;
-let mypb = Proc.create "Pb" [`C`;`E`] `G`;;
-let mypc = Proc.create "Pc" [`G`] `H`;;
+let mypa = Proc.create "Pa" [`A`;`B`] `C ** D` ;;
+let mypb = Proc.create "Pb" [`C`;`E`] `G` ;;
+let mypc = Proc.create "Pc" [`G`] `H` ;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "NEG C" "Res";;
 let myact2 = Action.create "JOIN" "Res" "lr" "Pc" "NEG G" "Rez";;
 mycomp "Res" [mypa;mypb;mypc] [myact1];;
 mycomp "Rez" [mypa;mypb;mypc] [myact1;myact2];;
 
-let mypa = Proc.create "Pa" [`C`;`E`] `G`;;
-let mypb = Proc.create "Pb" [`A`;`B`] `C ++ D`;;
+let mypa = Proc.create "Pa" [`C`;`E`] `G` ;;
+let mypb = Proc.create "Pb" [`A`;`B`] `C ++ D` ;;
 let myact1 = Action.create "JOIN" "Pb" "lr" "Pa" "NEG C" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 xxx;;
-let mypa = Proc.create "Pa" [`A`;`B`] `C ++ D`;;
-let mypb = Proc.create "Pb" [`D`;`G`] `H`;;
+let mypa = Proc.create "Pa" [`A`;`B`] `C ++ D` ;;
+let mypb = Proc.create "Pb" [`D`;`G`] `H` ;;
 let myact1 = Action.create "JOIN" "Pa" "r" "Pb" "NEG D" "Roz";;
 mycomp "Roz" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`A`;`B`] `C ** D ** X`;;
-let mypb = Proc.create "Pb" [`C`] `G`;;
+let mypa = Proc.create "Pa" [`A`;`B`] `C ** D ** X` ;;
+let mypb = Proc.create "Pb" [`C`] `G` ;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "NEG C" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`A`] `C ++ D`;;
-let mypb = Proc.create "Pb" [`C`;`E`;`F`] `G`;;
-let mypc = Proc.create "Pc" [`J`;`K`] `E ** L`;;
+let mypa = Proc.create "Pa" [`A`] `C ++ D` ;;
+let mypb = Proc.create "Pb" [`C`;`E`;`F`] `G` ;;
+let mypc = Proc.create "Pc" [`J`;`K`] `E ** L` ;;
 let myact1 = Action.create "JOIN" "Pc" "l" "Pb" "NEG E" "Res";;
 let myact2 = Action.create "JOIN" "Pa" "l" "Res" "NEG C" "Rez";;
 Proc.compose myst "Res" [mypa;mypb;mypc] [myact1];;
 Proc.compose myst "Rez" [mypa;mypb;mypc] [myact1;myact2];;
 
-let mypa = Proc.create "Pa" [`A`] `C ++ D`;;
-let mypb = Proc.create "Pb" [`C`] `G`;;
-let mypc = Proc.create "Pc" [`D`] `H`;;
+let mypa = Proc.create "Pa" [`A`] `C ++ D` ;;
+let mypb = Proc.create "Pb" [`C`] `G` ;;
+let mypc = Proc.create "Pc" [`D`] `H` ;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "NEG C" "Res";;
 let myact2 = Action.create "JOIN" "Res" "r" "Pc" "NEG D" "Rez";;
 mycomp "Res" [mypa;mypb;mypc] [myact1];;
 mycomp "Rez" [mypa;mypb;mypc] [myact1;myact2];;
 
-let mypa = Proc.create "Pa" [`W`] `(A**B) ++ (C**D)`;;
-let mypb = Proc.create "Pb" [`A`;`B`;`C`] `Z`;;
+let mypa = Proc.create "Pa" [`W`] `(A**B) ++ (C**D)` ;;
+let mypb = Proc.create "Pb" [`A`;`B`;`C`] `Z` ;;
 let myact1 = Action.create "JOIN" "Pa" "lrlr" "Pb" "NEG A" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 (* is C ** C ** D actually the best outcome? *)
 
-let mypa = Proc.create "Pa" [`A`] `B`;;
-let mypb = Proc.create "Pb" [`B`] `C`;;
+let mypa = Proc.create "Pa" [`A`] `B` ;;
+let mypb = Proc.create "Pb" [`B`] `C` ;;
 let myact1 = Action.create "JOIN" "Pa" "l" "Pb" "NEG B" "Res";;
 Proc.compose myst "Res" [mypa;mypb] [myact1];;
 let myres,_,myst2 = it;;
-let mypc = Proc.create "Pc" [`C`] `D`;;
+let mypc = Proc.create "Pc" [`C`] `D` ;;
 let myact2 = Action.create "JOIN" "Res" "l" "Pc" "NEG C" "Roz";;
 Proc.compose myst2 "Roz" [mypc;myres] [myact2];;
 let myroz = fst3 it;;
 print_string (Piviz.deploy myroz [myres;mypa;mypb;mypc]);;
 
-let mypa = Proc.create "P1" [`X`] `Y`;;
-let mypb = Proc.create "P2" [`Y`] `Z`;;
-let mypc = Proc.create "P3" [`Z`] `R`;;
+let mypa = Proc.create "P1" [`X`] `Y` ;;
+let mypb = Proc.create "P2" [`Y`] `Z` ;;
+let mypc = Proc.create "P3" [`Z`] `R` ;;
 let myst = Actionstate.create 7;;
 let myact1 = Action.create "JOIN" "P1" "" "P2" "(NEG Y)" "Co";;
 Proc.compose myst "Co" [mypa;mypb] [myact1];;
@@ -295,151 +290,151 @@ let myroz = fst3 it;;
 
 print_string (Piviz.deploy myroz [myres;mypa;mypb;mypc]);;
 
-let mypa = Proc.create "P1" [`X`] `Z`;;
-let mypb = Proc.create "P2" [`Y`] `Z`;;
+let mypa = Proc.create "P1" [`X`] `Z` ;;
+let mypb = Proc.create "P2" [`Y`] `Z` ;;
 let myact1 = Action.create "WITH" "P1" "(NEG X)" "P2" "(NEG Y)" "Co";;
 mycomp "Co" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "P1" [`X`;`A`;`B`] `Z`;;
-let mypb = Proc.create "P2" [`Y`] `Z`;;
+let mypa = Proc.create "P1" [`X`;`A`;`B`] `Z` ;;
+let mypb = Proc.create "P2" [`Y`] `Z` ;;
 let myact1 = Action.create "WITH" "P1" "(NEG X)" "P2" "(NEG Y)" "Co";;
 mycomp "Co" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "P1" [`X`] `A ** B`;;
-let mypb = Proc.create "P2" [`Y`] `B ** A`;;
+let mypa = Proc.create "P1" [`X`] `A ** B` ;;
+let mypb = Proc.create "P2" [`Y`] `B ** A` ;;
 let myact1 = Action.create "WITH" "P1" "(NEG X)" "P2" "(NEG Y)" "Co";;
 mycomp "Co" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "P1" [`X`;`A`] `Z`;;
-let mypb = Proc.create "P2" [`Y`;`B`] `W`;;
+let mypa = Proc.create "P1" [`X`;`A`] `Z` ;;
+let mypb = Proc.create "P2" [`Y`;`B`] `W` ;;
 let myact1 = Action.create "WITH" "P1" "(NEG X)" "P2" "(NEG Y)" "Co";;
 mycomp "Co" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "P1" [`X`;`A`;`C`] `Z`;;
-let mypb = Proc.create "P2" [`Y`;`B`;`D`] `W`;;
+let mypa = Proc.create "P1" [`X`;`A`;`C`] `Z` ;;
+let mypb = Proc.create "P2" [`Y`;`B`;`D`] `W` ;;
 let myact1 = Action.create "WITH" "P1" "(NEG X)" "P2" "(NEG Y)" "Co";;
 mycomp "Co" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "P1" [`X`;`A`;`C`] `Z`;;
-let mypb = Proc.create "P2" [`Y`;`B`;`C`] `W`;;
+let mypa = Proc.create "P1" [`X`;`A`;`C`] `Z` ;;
+let mypb = Proc.create "P2" [`Y`;`B`;`C`] `W` ;;
 let myact1 = Action.create "WITH" "P1" "(NEG X)" "P2" "(NEG Y)" "Co";;
 mycomp "Co" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "P1" [`X`;`A`;`C`;`C`;`C`;`C`] `Z`;;
-let mypb = Proc.create "P2" [`Y`;`B`;`C`;`C`;`C`] `W`;;
+let mypa = Proc.create "P1" [`X`;`A`;`C`;`C`;`C`;`C`] `Z` ;;
+let mypb = Proc.create "P2" [`Y`;`B`;`C`;`C`;`C`] `W` ;;
 let myact1 = Action.create "WITH" "P1" "(NEG X)" "P2" "(NEG Y)" "Co";;
 mycomp "Co" [mypa;mypb] [myact1];; 
 
-let mypa = Proc.create "P1" [`X`;`A ++ B`] `C`;;
-let mypb = Proc.create "P2" [`Y`;`B ++ A`] `C`;;
+let mypa = Proc.create "P1" [`X`;`A ++ B`] `C` ;;
+let mypb = Proc.create "P2" [`Y`;`B ++ A`] `C` ;;
 let myact1 = Action.create "WITH" "P1" "(NEG X)" "P2" "(NEG Y)" "Co";;
 mycomp "Co" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "P1" [`X`;`A ++ B`] `C`;;
-let mypb = Proc.create "P2" [`Y`;`B ++ A`;`A ++ B`] `C`;;
+let mypa = Proc.create "P1" [`X`;`A ++ B`] `C` ;;
+let mypb = Proc.create "P2" [`Y`;`B ++ A`;`A ++ B`] `C` ;;
 let myact1 = Action.create "WITH" "P1" "(NEG X)" "P2" "(NEG Y)" "Co";;
 mycomp "Co" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `A ++ B`;;
-let mypb = Proc.create "Pb" [`A ++ B`] `Y`;;
-let mypb = Proc.create "Pb" [`B ++ A`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `A ++ B` ;;
+let mypb = Proc.create "Pb" [`A ++ B`] `Y` ;;
+let mypb = Proc.create "Pb" [`B ++ A`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "" "Pb" "(NEG (A ++ B))" "Res";;
 let myact1 = Action.create "JOIN" "Pa" "" "Pb" "NEG (B ++ A)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `A ** B`;;
-let mypb = Proc.create "Pb" [`C ++ (A ** B)`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `A ** B` ;;
+let mypb = Proc.create "Pb" [`C ++ (A ** B)`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "" "Pb" "NEG (C ++ (A ** B))" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `A ** B ** C`;;
-let mypb = Proc.create "Pb" [`(C ** A) ** B`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `A ** B ** C` ;;
+let mypb = Proc.create "Pb" [`(C ** A) ** B`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "" "Pb" "NEG ((C ** A) ** B)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `D ** (A ++ B) ** C`;;
-let mypb = Proc.create "Pb" [`B ++ A`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `D ** (A ++ B) ** C` ;;
+let mypb = Proc.create "Pb" [`B ++ A`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "rlrlr" "Pb" "NEG (B ++ A)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `A ++ (B ** G)`;;
-let mypb = Proc.create "Pb" [`B ++ A`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `A ++ (B ** G)` ;;
+let mypb = Proc.create "Pb" [`B ++ A`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "rlr" "Pb" "NEG (B ++ A)" "Res";;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "NEG (B ++ A)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 (* TODO: Can we get output Y ++ (Y ** G) ?!? *)
 
-let mypa = Proc.create "Pa" [`X`] `A ++ B`;;
-let mypb = Proc.create "Pb" [`A ++ C ++ D`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `A ++ B` ;;
+let mypb = Proc.create "Pb" [`A ++ C ++ D`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "NEG (A ++ C ++ D)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `A ++ B ++ C`;;
-let mypb = Proc.create "Pb" [`A ++ B`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `A ++ B ++ C` ;;
+let mypb = Proc.create "Pb" [`A ++ B`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "NEG (A ++ B)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 (* TODO Get output Y ++ C !!? - see next example! *)
 
-let mypa = Proc.create "Pa" [`X`] `(A ++ B) ++ C`;;
-let mypb = Proc.create "Pb" [`A ++ B`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `(A ++ B) ++ C` ;;
+let mypb = Proc.create "Pb" [`A ++ B`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "NEG (A ++ B)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `A ++ C`;;
-let mypb = Proc.create "Pb" [`A ++ B`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `A ++ C` ;;
+let mypb = Proc.create "Pb" [`A ++ B`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "NEG (A ++ B)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `A`;;
-let mypb = Proc.create "Pb" [`(A ** B) ++ C`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `A` ;;
+let mypb = Proc.create "Pb" [`(A ** B) ++ C`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "" "Pb" "NEG ((A ** B) ++ C)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 (* TODO Yikes! Need to buffer B in larg!!! *)
 
 (* Is it possible to get a connection to a composite input that results in 
 non-leaf provenance??? *)
-let mypa = Proc.create "Pa" [`X`] `B ** C`;;
+let mypa = Proc.create "Pa" [`X`] `B ** C` ;;
 
-let mypb = Proc.create "Pb" [`(A ** B) ++ C`] `Y`;;
+let mypb = Proc.create "Pb" [`(A ** B) ++ C`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "" "Pb" "NEG ((A ** B) ++ C)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `(A ++ B) ** (C ++ D)`;;
-let mypb = Proc.create "Pb" [`B ++ A`;`D ++ C`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `(A ++ B) ** (C ++ D)` ;;
+let mypb = Proc.create "Pb" [`B ++ A`;`D ++ C`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "NEG (B ++ A)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `C ++ (A ** B)`;;
-let mypb = Proc.create "Pb" [`C`] `B ** A`;;
-let mypb = Proc.create "Pb" [`C`] `A ** B`;;
+let mypa = Proc.create "Pa" [`X`] `C ++ (A ** B)` ;;
+let mypb = Proc.create "Pb" [`C`] `B ** A` ;;
+let mypb = Proc.create "Pb" [`C`] `A ** B` ;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "NEG C" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `C ++ (A ** (B ++ D))`;;
-let mypb = Proc.create "Pb" [`C`] `(B ++ D) ** A`;;
+let mypa = Proc.create "Pa" [`X`] `C ++ (A ** (B ++ D))` ;;
+let mypb = Proc.create "Pb" [`C`] `(B ++ D) ** A` ;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "NEG C" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `A ++ (B ** C)`;;
-let mypb = Proc.create "Pb" [`A`] `Y ++ (C ** B)`;;
-let mypb = Proc.create "Pb" [`A`] `(C ** B) ++ Y`;;
+let mypa = Proc.create "Pa" [`X`] `A ++ (B ** C)` ;;
+let mypb = Proc.create "Pb" [`A`] `Y ++ (C ** B)` ;;
+let mypb = Proc.create "Pb" [`A`] `(C ** B) ++ Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "NEG A" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `(B ** C) ++ A`;;
-let mypb = Proc.create "Pb" [`A`] `Y ++ (C ** B)`;;
-let mypb = Proc.create "Pb" [`A`] `(C ** B) ++ Y`;;
+let mypa = Proc.create "Pa" [`X`] `(B ** C) ++ A` ;;
+let mypb = Proc.create "Pb" [`A`] `Y ++ (C ** B)` ;;
+let mypb = Proc.create "Pb" [`A`] `(C ** B) ++ Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "r" "Pb" "NEG A" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `A ** A`;;
-let mypb = Proc.create "Pb" [`A`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `A ** A` ;;
+let mypb = Proc.create "Pb" [`A`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "r" "Pb" "NEG A" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`;`X`] `R`;;
-let mypb = Proc.create "Pb" [`A`] `X`;;
-let mypc = Proc.create "Pc" [`W`] `A ** A`;;
+let mypa = Proc.create "Pa" [`X`;`X`] `R` ;;
+let mypb = Proc.create "Pb" [`A`] `X` ;;
+let mypc = Proc.create "Pc" [`W`] `A ** A` ;;
 let myact1 = Action.create "JOIN" "Pb" "" "Pa" "NEG X" "St1";;
 let myact2 = Action.create "JOIN" "Pb" "" "St1" "NEG X" "St2";;
 let myact3 = Action.create "JOIN" "Pc" "lr" "St2" "NEG A" "St3";;
@@ -447,9 +442,9 @@ mycomp "St1" [mypa;mypb] [myact1];;
 mycomp "St2" [mypa;mypb] [myact1;myact2];;
 mycomp "St3" [mypa;mypb;mypc] [myact1;myact2;myact3];;
 
-let mypa = Proc.create "Pa" [`X`;`X`] `R`;;
-let mypb = Proc.create "Pb" [`A ++ B`] `X`;;
-let mypc = Proc.create "Pc" [`W`] `(A ++ B) ** (A ++ B)`;;
+let mypa = Proc.create "Pa" [`X`;`X`] `R` ;;
+let mypb = Proc.create "Pb" [`A ++ B`] `X` ;;
+let mypc = Proc.create "Pc" [`W`] `(A ++ B) ** (A ++ B)` ;;
 let myact1 = Action.create "JOIN" "Pb" "" "Pa" "NEG X" "St1";;
 let myact2 = Action.create "JOIN" "Pb" "" "St1" "NEG X" "St2";;
 let myact3 = Action.create "JOIN" "Pc" "lrlr" "St2" "NEG (A ++ B)" "St3";;
@@ -457,76 +452,76 @@ mycomp "St1" [mypa;mypb] [myact1];;
 mycomp "St2" [mypa;mypb] [myact1;myact2];;
 mycomp "St3" [mypa;mypb;mypc] [myact1;myact2;myact3];;
 
-let mypa = Proc.create "Pa" [`X`;`X`] `R`;;
-let mypb = Proc.create "Pb" [`A`] `X`;;
-let mypc = Proc.create "Pc" [`W`] `A ++ B`;;
+let mypa = Proc.create "Pa" [`X`;`X`] `R` ;;
+let mypb = Proc.create "Pb" [`A`] `X` ;;
+let mypc = Proc.create "Pc" [`W`] `A ++ B` ;;
 let myact1 = Action.create "JOIN" "Pb" "" "Pa" "NEG X" "St1";;
 let myact2 = Action.create "JOIN" "Pb" "" "St1" "NEG X" "St2";;
 let myact3 = Action.create "JOIN" "Pc" "lr" "St2" "NEG A" "St3";;
 mycomp "St2" [mypa;mypb] [myact1;myact2];;
 mycomp "St3" [mypa;mypb;mypc] [myact1;myact2;myact3];;
 
-let mypa = Proc.create "Pa" [`A`;`A`] `R`;;
-let mypc = Proc.create "Pc" [`W`] `(A ++ B) ** (A ++ B)`;;
+let mypa = Proc.create "Pa" [`A`;`A`] `R` ;;
+let mypc = Proc.create "Pc" [`W`] `(A ++ B) ** (A ++ B)` ;;
 let myact1 = Action.create "JOIN" "Pc" "lrlr" "Pa" "NEG A" "St1";;
 mycomp "St1" [mypa;mypc] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`;`X`] `R`;;
-let mypb = Proc.create "Pb" [`A`] `X`;;
-let mypc = Proc.create "Pc" [`W`] `(A ++ B) ** (A ++ B)`;;
+let mypa = Proc.create "Pa" [`X`;`X`] `R` ;;
+let mypb = Proc.create "Pb" [`A`] `X` ;;
+let mypc = Proc.create "Pc" [`W`] `(A ++ B) ** (A ++ B)` ;;
 let myact1 = Action.create "JOIN" "Pb" "" "Pa" "NEG X" "St1";;
 let myact2 = Action.create "JOIN" "Pb" "" "St1" "NEG X" "St2";;
 let myact3 = Action.create "JOIN" "Pc" "lrlr" "St2" "NEG A" "St3";;
 mycomp "St2" [mypa;mypb] [myact1;myact2];;
 mycomp "St3" [mypa;mypb;mypc] [myact1;myact2;myact3];;
 
-let mypa = Proc.create "Pa" [`A`;`C`] `R`;;
-let mypb = Proc.create "Pb" [`W`] `(A ++ B)`;;
+let mypa = Proc.create "Pa" [`A`;`C`] `R` ;;
+let mypb = Proc.create "Pb" [`W`] `(A ++ B)` ;;
 let myact1 = Action.create "JOIN" "Pb" "lr" "Pa" "NEG A <> cPa_A_1" "St1";;
 mycomp "St1" [mypa;mypb] [myact1];;
 
-let mypb = Proc.create "Pb" [`W`] `(A ++ B) ** (C ++ (C ** B))`;;
+let mypb = Proc.create "Pb" [`W`] `(A ++ B) ** (C ++ (C ** B))` ;;
 let myact1 = Action.create "JOIN" "Pb" "lrlr" "Pa" "NEG A <> cPa_A_1" "St1";;
 mycomp "St1" [mypa;mypb] [myact1];;
 let myact2 = Action.create "JOIN" "St1" "rrlr" "Pa" "NEG C <> cPa_C_2" "St2";;
 mycomp "St2" [mypa;mypb] [myact1;myact2];;
 
-let mypa = Proc.create "Pa" [`X`] `(A ++ B) ** (A ++ B)`;;
-let mypb = Proc.create "Pb" [`A ++ B`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `(A ++ B) ** (A ++ B)` ;;
+let mypb = Proc.create "Pb" [`A ++ B`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "lrlr" "Pb" "NEG (A ++ B)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `(A ++ B) ** (A ++ B)`;;
-let mypb = Proc.create "Pb" [`A ++ B`;`A`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `(A ++ B) ** (A ++ B)` ;;
+let mypb = Proc.create "Pb" [`A ++ B`;`A`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "lrlr" "Pb" "NEG (A ++ B)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `(A ++ B) ** ((A ** Z) ++ B)`;;
-let mypb = Proc.create "Pb" [`A ++ B`;`A`;`Z`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `(A ++ B) ** ((A ** Z) ++ B)` ;;
+let mypb = Proc.create "Pb" [`A ++ B`;`A`;`Z`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "lrlr" "Pb" "NEG (A ++ B)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `(A ++ B) ** (A ++ B)`;;
-let mypb = Proc.create "Pb" [`A ++ B`;`A ++ B`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `(A ++ B) ** (A ++ B)` ;;
+let mypb = Proc.create "Pb" [`A ++ B`;`A ++ B`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "lrlr" "Pb" "NEG (A ++ B)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `(C ++ A ++ B) ** (A ++ B)`;;
-let mypb = Proc.create "Pb" [`A ++ B`;`A`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `(C ++ A ++ B) ** (A ++ B)` ;;
+let mypb = Proc.create "Pb" [`A ++ B`;`A`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "lrrlr" "Pb" "NEG (A ++ B)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`X`] `(C ++ A ++ B) ** (A ++ B)`;;
-let mypb = Proc.create "Pb" [`A ++ B`;`A ++ B`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `(C ++ A ++ B) ** (A ++ B)` ;;
+let mypb = Proc.create "Pb" [`A ++ B`;`A ++ B`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "lrrlr" "Pb" "NEG (A ++ B)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
 
-let mypa = Proc.create "Pa" [`X`] `A`;;
-let mypb = Proc.create "Pb" [`Y`] `B ++ C`;;
-let mypc = Proc.create "Pc" [`A`] `R`;;
-let mypd = Proc.create "Pd" [`B`] `S`;;
-let mype = Proc.create "Pe" [`R`;`S`] `Q`;;
+let mypa = Proc.create "Pa" [`X`] `A` ;;
+let mypb = Proc.create "Pb" [`Y`] `B ++ C` ;;
+let mypc = Proc.create "Pc" [`A`] `R` ;;
+let mypd = Proc.create "Pd" [`B`] `S` ;;
+let mype = Proc.create "Pe" [`R`;`S`] `Q` ;;
 let myact1 = Action.create "TENSOR" "Pa" "lr" "Pb" "NEG (A)" "S1";;
 let myact2 = Action.create "JOIN" "Pd" "" "Pe" "NEG (S)" "S2";;
 let myact3 = Action.create "JOIN" "Pc" "" "S2" "NEG (R)" "S3";;
@@ -536,24 +531,24 @@ mycomp "S2" [mypa;mypb;mypc;mypd;mype] [myact1;myact2];;
 mycomp "S3" [mypa;mypb;mypc;mypd;mype] [myact1;myact2;myact3];;
 mycomp "S4" [mypa;mypb;mypc;mypd;mype] [myact1;myact2;myact3;myact4];;
 
-let mypa = Proc.create "Pa" [`W`] `D ** (E ++ A)`;;
-let mypb = Proc.create "Pb" [`A`;`D`;`C`] `G`;;
+let mypa = Proc.create "Pa" [`W`] `D ** (E ++ A)` ;;
+let mypb = Proc.create "Pb" [`A`;`D`;`C`] `G` ;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "NEG D" "Res";;
 let myact1 = Action.create "JOIN" "Pa" "rr" "Pb" "NEG A" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`W`] `A ++ E`;;
-let mypb = Proc.create "Pb" [`E`] `G ++ A`;;
+let mypa = Proc.create "Pa" [`W`] `A ++ E` ;;
+let mypb = Proc.create "Pb" [`E`] `G ++ A` ;;
 let myact1 = Action.create "JOIN" "Pa" "r" "Pb" "NEG E" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
-let mypa = Proc.create "Pa" [`W`] `A ++ B`;;
-let mypb = Proc.create "Pb" [`A ++ C ++ D`] `G`;;
+let mypa = Proc.create "Pa" [`W`] `A ++ B` ;;
+let mypb = Proc.create "Pb" [`A ++ C ++ D`] `G` ;;
 let myact1 = Action.create "JOIN" "Pa" "lr" "Pb" "NEG (A ++ C ++ D)" "Res";;
 mycomp "Res" [mypa;mypb] [myact1];;
 
 
-
+(* ********************* *)
 
 
 let asms = [Proc.get_cll myst2; Proc.get_cll mypc];;
@@ -564,7 +559,7 @@ e (REPEAT META_EXISTS_TAC);;
 e (DISCH_THEN (LABEL_TAC "St2"));;
 e (DISCH_THEN (LABEL_TAC "Pc"));;
 
-let myxx = Proc.create "St2" [`A`;`A`] `R`;;
+let myxx = Proc.create "St2" [`A`;`A`] `R` ;;
 
 let mysetgoal procs =
   let asms = map (gen_ll_channels o Proc.get_cll) procs in
@@ -587,11 +582,11 @@ let PRINT_GOAL_TAC gl =
 let PRINT_TAC s gl =
   print_string s; print_newline(); ALL_TAC gl;;
 
-let myp = Proc.create "P" [`X ++ Y`] `(X ++ Y) ** (X ++ Y) ** (X ++ Y) ** (X ++ Y)`;;
-let myp1 = Proc.create "P1" [`X ++ Y`] `O1`;;
-let myp2 = Proc.create "P2" [`X ++ Y`] `O2`;;
-let myp3 = Proc.create "P3" [`X ++ Y`] `O3`;;
-let myp4 = Proc.create "P4" [`X ++ Y`] `O4`;;
+let myp = Proc.create "P" [`X ++ Y`] `(X ++ Y) ** (X ++ Y) ** (X ++ Y) ** (X ++ Y)` ;;
+let myp1 = Proc.create "P1" [`X ++ Y`] `O1` ;;
+let myp2 = Proc.create "P2" [`X ++ Y`] `O2` ;;
+let myp3 = Proc.create "P3" [`X ++ Y`] `O3` ;;
+let myp4 = Proc.create "P4" [`X ++ Y`] `O4` ;;
 let myst = Actionstate.create 1;;
 let myact1 = Action.create "JOIN" "P" "lrlr" "P1" "(NEG (X ++ Y))" "S1";;
 let myact2 = Action.create "JOIN" "S1" "rlr" "P2" "(NEG (X ++ Y))" "S2";;
@@ -609,8 +604,8 @@ Proc.compose myst2 "S1" [myp;myp1;myp2;myp3;myp4;mys3] [myact4'];;
 
 myff (mypf,myst);;
 
-let mypa = Proc.create "P1" [`X`;`A`;`C`] `Z`;;
-let mypb = Proc.create "P2" [`Y`;`B`;`C`] `W`;;
+let mypa = Proc.create "P1" [`X`;`A`;`C`] `Z` ;;
+let mypb = Proc.create "P2" [`Y`;`B`;`C`] `W` ;;
 let myact1 = Action.create "WITH" "P1" "(NEG X)" "P2" "(NEG Y)" "Co";;
 
 mysetgoal [mypa;mypb];;
@@ -622,9 +617,9 @@ top_thm();;
    
 
 
-let mypa = Proc.create "Pa" [`X`;`X`] `R`;;
-let mypb = Proc.create "Pb" [`A`] `X`;;
-let mypc = Proc.create "Pc" [`W`] `A ** A`;;
+let mypa = Proc.create "Pa" [`X`;`X`] `R` ;;
+let mypb = Proc.create "Pb" [`A`] `X` ;;
+let mypc = Proc.create "Pc" [`W`] `A ** A` ;;
 let myact1 = Action.create "JOIN" "Pb" "" "Pa" "NEG X" "St1";;
 let myact2 = Action.create "JOIN" "Pb" "" "St1" "NEG X" "St2";;
 let myact3 = Action.create "JOIN" "Pc" "lr" "St2" "NEG A" "St3";;
@@ -696,7 +691,7 @@ let mytm2 =  `NAMES
      (Out 33 [36] (Comp (In 37 [35] Zero) (Out 36 [34] Zero))))))
     (In 38 [42]
     (Res [43] (In 39 [40; 41] (Out 41 [43] (In 42 [44] (Out 43 [44] Zero)))))))))
-   ))`;;
+   ))` ;;
 
 let mytm2 =  `piSUBN1
    (Res [46]
@@ -731,7 +726,7 @@ let mytm2 =  `piSUBN1
      (Out 33 [36] (Comp (In 37 [35] Zero) (Out 36 [34] Zero))))))
     (In 38 [42]
     (Res [43] (In 39 [40; 41] (Out 41 [43] (In 42 [44] (Out 43 [44] Zero)))))))))
-   )) (21,50)`;;
+   )) (21,50)` ;;
 
 
 my_time NAMES_REDUCE_CONV mytm2;;
@@ -775,14 +770,14 @@ let mytm = `(FN (Comp (In 33 [7; 6] (In 7 [8; 9] Zero))
    (In 20 [22] (Out 21 [22] (Comp (In 29 [25] Zero)
      (Comp (In 30 [26] Zero)
      (Res [27; 28]
-     (Out 32 [27; 28] (Comp (Out 27 [23] Zero) (Out 28 [24] Zero))))))))))))))))) LDIFF [26]`;;
+     (Out 32 [27; 28] (Comp (Out 27 [23] Zero) (Out 28 [24] Zero))))))))))))))))) LDIFF [26]` ;;
 
 	    Time: 0.412025;;
 
-let xy = `FN (Out 1 [2;3] Zero)`;;
-let xy = `FN (In 1 [2;3] Zero)`;;
-let xy = `FN (In 1 [2;3] (Out 1 [2;3;4;5] Zero))`;;
-let xy = `SUBN (Out 1 [2;3] Zero) (SUB1F 1 3)`;;
+let xy = `FN (Out 1 [2;3] Zero)` ;;
+let xy = `FN (In 1 [2;3] Zero)` ;;
+let xy = `FN (In 1 [2;3] (Out 1 [2;3;4;5] Zero))` ;;
+let xy = `SUBN (Out 1 [2;3] Zero) (SUB1F 1 3)` ;;
 
 PURE_ONCE_REWRITE_CONV [FN;NAMES;BN] xy;;
 
@@ -793,8 +788,8 @@ NUM_REDUCE_CONV it;;
 
 FN_CONV NUM_REDUCE_CONV xy;;
 
-let xx = `[1; 2; 3; 4; 5] LDIFF [2; 3]`;;
-let xx = `[1; 2; 3; 4; 5; 3; 6; 7] DEL 3`;;
+let xx = `[1; 2; 3; 4; 5] LDIFF [2; 3]` ;;
+let xx = `[1; 2; 3; 4; 5; 3; 6; 7] DEL 3` ;;
 	  
 let PRINTSN_CONV tm = 
   let comb = (fst o strip_comb) tm in 
@@ -809,7 +804,7 @@ let newtm = `SUBN1
   (Res [0; 1]
      (In 2 [5;6] (Res [3;4] (Out 5 [0;1]
 			       (Comp Zero (Res [4] (Comp (SUBN1 Zero (2,4)) (SUBN1 Zero (3,4)))))))))
-  (5,6)`;;
+  (5,6)` ;;
 
 
 my_time PISUBN1_CONV newtm;;
@@ -819,23 +814,23 @@ my_time PISUBN1_CONV newtm;;
 (* BUFFER_TAC *)
 (* =========================================================================== *)
 
-g `?P x. (|-- (' (NEG A <> ii) ^' (A <> oo)) P)`;;
-g `?P x. (|-- (' (NEG (A ** B) <> ii) ^' ((A ** B) <> oo)) P)`;;
-g `?P x. (|-- (' (NEG (A ** B ** C ** D) <> ii) ^' ((A ** B ** C ** D) <> oo)) P)`;;
-g `?P x. (|-- (' (NEG (A ++ B) <> ii) ^' ((A ++ B) <> oo)) P)`;;
-g `?P x. (|-- (' (NEG (A ++ (B ** C ++ D)) <> ii) ^' ((A ++ (B ** C ++ D)) <> oo)) P)`;;
-g `?P x. (|-- (' (NEG ((A ** C ++ D) ++ (B ** C ++ D)) <> ii) ^' (((A ** C ++ D) ++ (B ** C ++ D)) <> oo)) P)`;;
+g `?P x. (|-- (' (NEG A <> ii) ^' (A <> oo)) P)` ;;
+g `?P x. (|-- (' (NEG (A ** B) <> ii) ^' ((A ** B) <> oo)) P)` ;;
+g `?P x. (|-- (' (NEG (A ** B ** C ** D) <> ii) ^' ((A ** B ** C ** D) <> oo)) P)` ;;
+g `?P x. (|-- (' (NEG (A ++ B) <> ii) ^' ((A ++ B) <> oo)) P)` ;;
+g `?P x. (|-- (' (NEG (A ++ (B ** C ++ D)) <> ii) ^' ((A ++ (B ** C ++ D)) <> oo)) P)` ;;
+g `?P x. (|-- (' (NEG ((A ** C ++ D) ++ (B ** C ++ D)) <> ii) ^' (((A ** C ++ D) ++ (B ** C ++ D)) <> oo)) P)` ;;
 e (REPEAT META_EXISTS_TAC);;
 e (ETAC_TAC' Actionstate.print (Actionstate.create 0) Clltac.BUFFER_TAC);;
 top_thm();;
-instantiate (top_inst (p())) `P:NAgent`;;
+instantiate (top_inst (p())) `P:NAgent` ;;
 
-g `?P x. (|-- (' (NEG A <> ai) ^' (NEG B <> bi) ^' ((A ** B) <> oo)) P)`;;
-g `?P x. (|-- (' (NEG A <> ai) ^' (NEG (B ++ C) <> bi) ^' ((A ** B ++ C) <> oo)) P)`;;
+g `?P x. (|-- (' (NEG A <> ai) ^' (NEG B <> bi) ^' ((A ** B) <> oo)) P)` ;;
+g `?P x. (|-- (' (NEG A <> ai) ^' (NEG (B ++ C) <> bi) ^' ((A ** B ++ C) <> oo)) P)` ;;
 e (REPEAT META_EXISTS_TAC);;
 e (ETAC_TAC' Actionstate.print (Actionstate.create 0) Clltac.PARBUF_TAC);;
 top_thm();;
-instantiate (top_inst (p())) `P:NAgent`;;
+instantiate (top_inst (p())) `P:NAgent` ;;
 
 
 
@@ -849,13 +844,13 @@ instantiate (top_inst (p())) `P:NAgent`;;
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' (((A ** D) ++ (E ++ K)) <> ae)) Pa) ==>
   (|-- (' (NEG (A ** D) <> a)^' (NEG B <> b)^' (NEG G <> g)^' (NEG H <> h)^' (NEG J <> j)
 	^ ' (((C ** L) ++ M) <> c)) Pb) ==>
-P`;;
+P` ;;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' (((A ** D) ++ (E ++ K)) <> ae)) Pa) ==>
   (|-- (' (NEG (E ++ K) <> a)^' (NEG B <> b)^' (NEG G <> g)^' (NEG H <> h)^' (NEG J <> j)
 	^ ' (((C ** L) ++ M) <> c)) Pb) ==>
-P`;;
-(*  (|-- (' (NEG W <> w)^' (NEG B <> b) ^ ' ((C ++ (B ** E)) <> x)) P)`;;*)
+P` ;;
+(*  (|-- (' (NEG W <> w)^' (NEG B <> b) ^ ' ((C ++ (B ** E)) <> x)) P)` ;;*)
 
 gll mytm;;
 e (REPEAT META_EXISTS_TAC);;
@@ -869,17 +864,17 @@ ellma();;
 top_thm();;
 b();;
 
-instantiate ((snd o fst3 o hd o p) ()) `P:bool`;;
+instantiate ((snd o fst3 o hd o p) ()) `P:bool` ;;
 
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' (((A ++ D) ** (B ** H)) <> ae)) Pa) ==>
   (|-- (' (NEG A <> a)^' (NEG B <> b)^ '(C <> c)) Pb) ==>
-P`;;
+P` ;;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' (((A ++ D) ** (B ** H)) <> ae)) Pa) ==>
   (|-- (' (NEG A <> a)^' (NEG B <> b)^ '(A <> c)) Pb) ==>
-P`;;
-(*  (|-- (' (NEG W <> w)^' (NEG B <> b) ^ ' ((C ++ (B ** E)) <> x)) P)`;;*)
+P` ;;
+(*  (|-- (' (NEG W <> w)^' (NEG B <> b) ^ ' ((C ++ (B ** E)) <> x)) P)` ;;*)
 
 let mydeb mytm = (gll mytm ; ell (REPEAT META_EXISTS_TAC THEN REPEAT (DISCH_THEN LABEL_SERV) THEN LABEL_JOIN_TAC "Pa" "Pb"));;
 
@@ -899,7 +894,7 @@ let xdep_defs =  map ((fun x -> x.Cenv.Composer.Proc.proc_def) o (Cenv.Composer.
 let xproc = (rhs o concl o REWRITE_CONV[piSUBN1;piSUBN] o rhs o concl o REWRITE_CONV Cllpi.CLL_PROCS o rhs o snd o strip_forall) (Cenv.get_proc_def myid "Pe");;
 
 
-let xproc = `(piSUB NCH (Pc (z0,cPa_A_1__,cPa_B_2__,cPb_E_2__)) (FEMPTY |+ (z0,z1)))`;;
+let xproc = `(piSUB NCH (Pc (z0,cPa_A_1__,cPa_B_2__,cPb_E_2__)) (FEMPTY |+ (z0,z1)))` ;;
 let xdep_defs = [(hd o tl) xdep_defs];;
 let xathms = map ASSUME (filter (is_agent_def `:num`) xdep_defs);;
 let xthm1 = REWRITE_CONV xathms xproc;;
@@ -913,7 +908,7 @@ DEPTH_CONV (PI_AGENT_REDUCE_CONV xdep_defs reduce_pap_subs (PI_CONV PI_SUBN_CONV
 
 
 
-let xcll = Cc.Proc.mk_cll_def [] "Pa" [`NEG A`;`NEG B`] `C ** D`;;
+let xcll = Cc.Proc.mk_cll_def [] "Pa" [`NEG A`;`NEG B`] `C ** D` ;;
 let xproc = Cllpi.cll_to_proc xcll;;
 let xchans = (dest_list o rhs o concl o Cllpi.proc_fn_conv o mk_icomb) (Cllpi.proc_fn,xproc);;
 let xcall = Cc.Proc.mk_call "Pa" xchans;;
@@ -940,28 +935,28 @@ let mysetup tm =
 
 let mytm = `?P x. (|-- (' (NEG W <> w) ^ ' (A <> a)) Pa) ==>
   (|-- (' (NEG A <> a)^' (B <> b)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "" "Pb" "" "Res");;
  
 let mytm =  `?P x:num. (|-- (' (NEG W <> w) ^ ' ((A ** B) <> ae)) Pa) ==>
   (|-- (' (NEG A <> a)^' (NEG C <> c)
 	^ ' (D <> d)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "l" "Pb" "" "Res");;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' ((A ** B) <> ae)) Pa) ==>
   (|-- (' (NEG B <> b)^' (NEG C <> c)
 	^ ' (D <> d)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "r" "Pb" "" "Res");;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' ((A ** B) <> ae)) Pa) ==>
   (|-- (' (NEG A <> a)^' (NEG B <> b)^' (NEG C <> c)
 	^ ' (D <> d)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "l" "Pb" "" "Res");;
 b();;
@@ -971,14 +966,14 @@ e (Ct.JOIN_TAC "Pa" "r" "Pb" "" "Res");;
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' ((A ** B ** C) <> ae)) Pa) ==>
   (|-- (' (NEG A <> a)^' (NEG B <> b)^' (NEG C <> c)
 	^ ' (D <> d)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "l" "Pb" "" "Res");;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' ((A ** B ** C ** D) <> ae)) Pa) ==>
   (|-- (' (NEG A <> a)^' (NEG D <> b)^' (NEG G <> c)
 	^ ' (D <> d)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "l" "Pb" "" "Res");;
 b();;
@@ -987,81 +982,81 @@ e (Ct.JOIN_TAC "Pa" "rrr" "Pb" "" "Res");;
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' ((A ** B ** C ** D) <> ae)) Pa) ==>
   (|-- (' (NEG G <> a)^' (NEG H <> b)^' (NEG J <> c)
 	^ ' (K <> d)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "l" "Pb" "" "Res");;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' (((A ** B) ** E) <> ae)) Pa) ==>
   (|-- (' (NEG A <> a)^' (NEG B <> b)^' (NEG C <> c)
 	^ ' (D <> d)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "lr" "Pb" "" "Res");;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' ((A ++ E) <> ae)) Pa) ==>
   (|-- (' (NEG A <> a)^' (NEG B <> b)^' (NEG C <> c)
 	^ ' (E <> e)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "l" "Pb" "" "Res");;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' ((E ++ A) <> ae)) Pa) ==>
   (|-- (' (NEG A <> a)^' (NEG B <> b)^' (NEG C <> c)
 	^ ' (E <> e)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "r" "Pb" "" "Res");;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' (((E ++ A)) <> ae)) Pa) ==>
   (|-- (' (NEG A <> a) ^ ' (E <> e)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "r" "Pb" "" "Res");;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' (((A ++ E)) <> ae)) Pa) ==>
   (|-- (' (NEG A <> a) ^ ' (E <> e)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "l" "Pb" "" "Res");;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' (((A ** B) ++ E) <> ae)) Pa) ==>
   (|-- (' (NEG A <> a)^' (NEG B <> b)^' (NEG C <> c)
 	^ ' (D <> d)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "ll" "Pb" "" "Res");;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' ((A ++ E) <> ae)) Pa) ==>
   (|-- (' (NEG A <> a)^' (NEG B <> b)^' (NEG E <> c)
 	^ ' (D <> d)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "l" "Pb" "" "Res");;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' (((A ** B) ++ E) <> ae)) Pa) ==>
   (|-- (' (NEG A <> a)^' (NEG B <> b)^' (NEG E <> c)
 	^ ' (D <> d)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "l" "Pb" "" "Res");;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' ((B ** (A ++ E)) <> ae)) Pa) ==>
   (|-- (' (NEG A <> a) ^ ' (E <> e)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "rl" "Pb" "" "Res");;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' ((D ** (E ++ A)) <> ae)) Pa) ==>
   (|-- (' (NEG A <> a)^' (NEG B <> b)^' (NEG C <> c)
 	^ ' (E <> e)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "rr" "Pb" "" "Res");;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' ((D ** (E ++ A)) <> ae)) Pa) ==>
   (|-- (' (NEG D <> d)^' (NEG C <> c)
 	^ ' (G <> g)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 (* Interesting case: options are ignored unless selected (prioritized) *)
 e (Ct.JOIN_TAC "Pa" "ll" "Pb" "" "Res");;
@@ -1070,7 +1065,7 @@ e (Ct.JOIN_TAC "Pa" "ll" "Pb" "" "Res");;
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' ((D ** (E ++ A)) <> ae)) Pa) ==>
   (|-- (' (NEG A <> a)^' (NEG D <> d)^' (NEG C <> c)
 	^ ' (G <> g)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 (* Interesting case: options are ignored unless selected (prioritized) *)
 e (Ct.JOIN_TAC "Pa" "ll" "Pb" "" "Res");; 
@@ -1080,28 +1075,28 @@ e (Ct.JOIN_TAC "Pa" "rr" "Pb" "" "Res");;
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' ((A ++ E) <> ae)) Pa) ==>
   (|-- (' (NEG E <> c)
 	^ ' ((A ++ G) <> d)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "r" "Pb" "" "Res");;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' ((A ++ E) <> ae)) Pa) ==>
   (|-- (' (NEG E <> c)
 	^ ' ((G ++ A) <> d)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "r" "Pb" "" "Res");;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' ((A ++ E) <> ae)) Pa) ==>
   (|-- (' (NEG A <> c)
 	^ ' ((E ++ G) <> d)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "l" "Pb" "" "Res");;
 
 let mytm =  `?P x. (|-- (' (NEG W <> w) ^ ' ((A ++ E) <> ae)) Pa) ==>
   (|-- (' (NEG A <> c)
 	^ ' ((G ++ E) <> d)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.JOIN_TAC "Pa" "l" "Pb" "" "Res");;
 
@@ -1110,7 +1105,7 @@ let mytm =  `?P x.
   (|-- (' (NEG A <> na) ^ ' ((G ** H)  <> g)) Pa) ==>
   (|-- (' (NEG B <> n)^' (NEG C <> c)^ ' (E <> e)) Pb) ==>
   (|-- (' (NEG W <> w) ^ ' ((A ** B) <> ab)) Pc) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.TENSOR_TAC "Pa" "" "Pb" "" "Res");;
 e (Ct.JOIN_TAC "Pc" "l" "Res" "" "Res2");;
@@ -1123,30 +1118,30 @@ let mytm =  `?P x.
   (|-- (' (NEG A <> na) ^ ' (B <> b)) Pa) ==>
   (|-- (' (NEG A <> naa) ^ ' (B <> bb)) Pb) ==>
   (|-- (' (NEG A <> naaa) ^ ' (B <> bbb)) Pc) ==>
-P`;;
+P` ;;
 
 let mytm =  `?P x. 
   (|-- (' (NEG W <> nw) ^ ' ((A ++ C) <> b)) Pa) ==>
   (|-- (' (NEG (A ++ C) <> nc) ^ ' (D <> d)) Pb) ==>
-P`;;
+P` ;;
 
 let mytm =  `?P x. 
   (|-- (' (NEG A <> a) ^ ' (NEG B <> b) ^ ' (NEG C <> c) ^ ' (D <> d)) Pa) ==>
   (|-- (' (NEG X <> x) ^ ' (NEG Y <> y) ^ ' (NEG C <> c) ^ ' (NEG W <> w) ^ ' (Z <> z)) Pb) ==>
-P`;;
+P` ;;
 
 
 let mytm =  `?P x. 
   (|-- (' (NEG A <> a) ^ ' (D <> d)) Pa) ==>
   (|-- (' (NEG X <> x) ^ ' (Z <> z)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.WITH_TAC "Pa" "NEG A <> a" "Pb" "NEG X <> x" "Res");;
 
 let mytm =  `?P x. 
   (|-- (' (NEG A <> a) ^ ' (D <> da)) Pa) ==>
   (|-- (' (NEG X <> x) ^ ' (D <> db)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 
 e (Ct.WITH_TAC "Pa" "NEG A <> a" "Pb" "NEG X <> x" "Res");;
@@ -1154,7 +1149,7 @@ e (Ct.WITH_TAC "Pa" "NEG A <> a" "Pb" "NEG X <> x" "Res");;
 let mytm =  `?P x. 
   (|-- (' (NEG A <> a) ^ ' (NEG B <> b) ^ ' (NEG C <> c) ^ ' (D <> d)) Pa) ==>
   (|-- (' (NEG X <> x) ^ ' (NEG Y <> y) ^ ' (NEG W <> w) ^ ' (Z <> z)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.WITH_TAC "Pa" "NEG A <> a" "Pb" "NEG X <> x" "Res");;
 e (Ct.WITH_TAC "Pa" "NEG A <> a" "Paa" "NEG B <> b" "Res");;
@@ -1162,13 +1157,13 @@ e (Ct.WITH_TAC "Pa" "NEG A <> a" "Paa" "NEG B <> b" "Res");;
 let mytm =  `?P x. 
   (|-- (' (NEG A <> a) ^ ' (NEG B <> b) ^ ' (NEG C <> c) ^ ' (D <> d)) Pa) ==>
   (|-- (' (NEG X <> x) ^ ' (NEG Y <> y) ^ ' (NEG W <> w) ^ ' (Z <> z)) Pb) ==>
-P`;;
+P` ;;
 mysetup mytm;;
 e (Ct.WITH_TAC "Pa" "NEG A <> a" "Pb" "NEG X <> x" "Res");;
 e (Ct.WITH_TAC "Pa" "NEG A <> a" "Paa" "NEG B <> b" "Res");;
 
-mk_llservice "P" `(' (NEG R <> r) ^ ' ((A ** B ** C) <> z))`;;
-mk_llservice "P1" `(' (NEG R <> r) ^ ' ((A ** B) <> z))`;;
+mk_llservice "P" `(' (NEG R <> r) ^ ' ((A ** B ** C) <> z))` ;;
+mk_llservice "P1" `(' (NEG R <> r) ^ ' ((A ** B) <> z))` ;;
 print_string (scala_atomic_service "P1");;
 
 let rec cll_latex chans tm =
@@ -1257,9 +1252,9 @@ module Sout = Salata(Patatontomata(Patatata));;
 
 
 
-let myout = `(X ++ Y) ** (X ++ Y) ** (X ++ Y) ** (X ++ Y)`;;
-let myout = `(X ++ Y) ** (A ++ B) ** (C ++ D) ** (E ++ F)`;;
-let myout = `(X ++ Y) ** A ** B`;;
+let myout = `(X ++ Y) ** (X ++ Y) ** (X ++ Y) ** (X ++ Y)` ;;
+let myout = `(X ++ Y) ** (A ++ B) ** (C ++ D) ** (E ++ F)` ;;
+let myout = `(X ++ Y) ** A ** B` ;;
 let mypath = "lrlr";;
 
 let mypath = "rlr";;
@@ -1271,48 +1266,48 @@ let mysetup tm =
 
 follow_path mypath myout;;
 
-let mytm =  `?P. (|-- (' (NEG (X ++ Y) <> a) ^ ' (R <> r)) P) ==> XYZ`;;
+let mytm =  `?P. (|-- (' (NEG (X ++ Y) <> a) ^ ' (R <> r)) P) ==> XYZ` ;;
 mysetup mytm;;
-let mytm =  `?P. (|-- (' (NEG (X) <> a) ^ ' ((A ** B ** C) <> r)) P) ==> XYZ`;;
+let mytm =  `?P. (|-- (' (NEG (X) <> a) ^ ' ((A ** B ** C) <> r)) P) ==> XYZ` ;;
 mysetup mytm;;
 
-let myout = `(X ++ Y) ** A ** B`;;
+let myout = `(X ++ Y) ** A ** B` ;;
 let mypath = "rlr";;
 
-let mytm =  `?P. (|-- (' (NEG (X) <> a) ^ ' ((R) <> r)) P) ==> XYZ`;;
+let mytm =  `?P. (|-- (' (NEG (X) <> a) ^ ' ((R) <> r)) P) ==> XYZ` ;;
 let mypath = "lrlr";;
 mysetup mytm;;
 
-let mytm =  `?P. (|-- (' (NEG (Y) <> a) ^ ' ((R) <> r)) P) ==> XYZ`;;
+let mytm =  `?P. (|-- (' (NEG (Y) <> a) ^ ' ((R) <> r)) P) ==> XYZ` ;;
 let mypath = "lrr";;
 mysetup mytm;;
 
-let mytm =  `?P. (|-- (' (NEG (A) <> a) ^ ' ((R) <> r)) P) ==> XYZ`;;
+let mytm =  `?P. (|-- (' (NEG (A) <> a) ^ ' ((R) <> r)) P) ==> XYZ` ;;
 let mypath = "rlr";;
 mysetup mytm;;
 
 e (Actionstate.TAC (INPUT_TAC myout mypath "P"));;
 
-let myout = `((Z ** ( A ++ B )) ** (C ++ D) ) ** (X ++ Y)`;;
+let myout = `((Z ** ( A ++ B )) ** (C ++ D) ) ** (X ++ Y)` ;;
 
-let mytm =  `?P. (|-- (' (NEG (X ++ Y) <> a) ^ ' ((R) <> r)) P) ==> XYZ`;;
+let mytm =  `?P. (|-- (' (NEG (X ++ Y) <> a) ^ ' ((R) <> r)) P) ==> XYZ` ;;
 let mypath = "r";;
 mysetup mytm;;
 
-let mytm =  `?P. (|-- (' (NEG (Y) <> a) ^ ' ((R) <> r)) P) ==> XYZ`;;
+let mytm =  `?P. (|-- (' (NEG (Y) <> a) ^ ' ((R) <> r)) P) ==> XYZ` ;;
 let mypath = "rlrr";;
 mysetup mytm;;
 
-let mytm =  `?P. (|-- (' (NEG (A) <> a) ^ ' ((R) <> r)) P) ==> XYZ`;;
+let mytm =  `?P. (|-- (' (NEG (A) <> a) ^ ' ((R) <> r)) P) ==> XYZ` ;;
 let mypath = "rlr";;
 mysetup mytm;;
 
 e (Actionstate.TAC (INPUT_TAC myout mypath "P"));;
 
 
-let myout = `((X ++ Y) ** O3 ** O2) ** O1`;;
+let myout = `((X ++ Y) ** O3 ** O2) ** O1` ;;
 let mypath = "lrlrlr";;
-let mytm =  `?P. (|-- (' (NEG (X ++ Y) <> a) ^ ' (R <> r)) P) ==> XYZ`;;
+let mytm =  `?P. (|-- (' (NEG (X ++ Y) <> a) ^ ' (R <> r)) P) ==> XYZ` ;;
 mysetup mytm;;
 (*  ' (((R ** B) ** (X ++ Y)) <> z3 *)
 e (Actionstate.TAC (INPUT_TAC myout mypath "P"));;
@@ -1321,7 +1316,7 @@ e (Actionstate.TAC (INPUT_TAC myout mypath "P"));;
 	      
 
 	      
-let mytm =  `?P. (|-- (' (NEG A <> a) ^ ' (NEG B <> b) ^ ' (NEG C <> c) ^ ' (X <> x)) P) ==> XYZ`;;
+let mytm =  `?P. (|-- (' (NEG A <> a) ^ ' (NEG B <> b) ^ ' (NEG C <> c) ^ ' (X <> x)) P) ==> XYZ` ;;
 mysetup mytm;;
 
 let XINPUT_TAC out path = (Actionstate.TAC (INPUT_TAC out path "P"));;
@@ -1373,7 +1368,7 @@ e (Ct.WITH_TAC "Pa" "NEG A <> a" "Paa" "NEG B <> b" "Res");; (* TODO: bug? *)
 
 (* -- *)
 
-let mytm =  `?P. (|-- (' (NEG X <> x) ^ ' (Y <> y)) Pa) ==> P`;;
+let mytm =  `?P. (|-- (' (NEG X <> x) ^ ' (Y <> y)) Pa) ==> P` ;;
 mysetup mytm;;
 
 
@@ -1383,7 +1378,7 @@ b();;
 e (INPUT_TAC `Y ++ X` "r" xlbl);;
 b();;
 
-let mytm =  `?P. (|-- (' (NEG X <> x) ^ ' ((A ++ B) <> y)) Pa) ==> P`;;
+let mytm =  `?P. (|-- (' (NEG X <> x) ^ ' ((A ++ B) <> y)) Pa) ==> P` ;;
 mysetup mytm;;
 
 e (INPUT_TAC `X ++ A` "l" xlbl);;
@@ -1432,7 +1427,7 @@ Patntom.pat 5;;
 (* JSON *)
 
 let myins = [`A:LinProp`;`B:LinProp`;`C++D`];;
-let myout = `A ** (B ++ C) ** D`;;
+let myout = `A ** (B ++ C) ** D` ;;
 let mypins = map Json_comp.from_linprop myins;;
 let mypout = Json_comp.from_linprop myout;;
 let mycmd = Object [
@@ -1458,9 +1453,9 @@ let mycreate name ins out =
     Proc.create name ins out;;
 
 
-let mypa = mycreate "Pa" [`A:LinProp`;`B:LinProp`] `C ** D`;;
-let mypb = mycreate "Pb" [`C:LinProp`;`E:LinProp`] `G:LinProp`;;
-let mypd = mycreate "Pd" [`D:LinProp`;`G:LinProp`] `H:LinProp`;;
+let mypa = mycreate "Pa" [`A:LinProp`;`B:LinProp`] `C ** D` ;;
+let mypb = mycreate "Pb" [`C:LinProp`;`E:LinProp`] `G:LinProp` ;;
+let mypd = mycreate "Pd" [`D:LinProp`;`G:LinProp`] `H:LinProp` ;;
 let myst = Actionstate.create 0;;					      
 let myact1 = Action.create "JOIN" "Pa" "l" "Pb" "" "Res";;
 let myactq = Action.create "JOIN" "Res" "r" "Pd" "" "Rez";;
@@ -1507,20 +1502,20 @@ mk_icomb (op,Proc.try_proc_type arg);;
 (* Isabelle Light *)
 (* rule_tac *)
 
-g `?a:num b:num P. |-- ('(NEG (A ** (B ** C)) <> a) ^ '(((A ** B) ** C) <> b)) P`;;
-g `?a:num b:num P. |-- ('(NEG (A ** (B ** D)) <> a) ^ '(((A ** B) ** C) <> b)) P`;;
-g `?a:num b:num P. |-- ('(NEG (A ** (B ** C)) <> a) ^ '((A ** D) <> b)) P`;;
-g `?a:num b:num P. |-- ('(NEG (A ** (B ** C)) <> a) ^ '((G ** D) <> b)) P`;;
-g `?a:num b:num P. |-- ('(NEG (A ** (B ** (C ** D))) <> a) ^ '((G ++ ((A ** B) ** (C ** D))) <> b)) P`;;
-g `?a:num b:num P. |-- ('(NEG (A ** (B ++ C)) <> a) ^ '((G ++ ((A ** B) ++ (A ** C))) <> b)) P`;;
-g `?a:num b:num P. |-- ('(NEG (A) <> a) ^ '((A ++ (B ** (C ++ D))) <> b)) P`;;
-g `?a:num b:num P. |-- ('(NEG (B ** C) <> a) ^ '((A ++ (B ** (C ++ D))) <> b)) P`;;
-g `?a:num b:num P. |-- ('(NEG (B ** D) <> a) ^ '((A ++ (B ** (C ++ D))) <> b)) P`;;
-g `?a:num b:num P. |-- ('(NEG (((B ++ C) ** A) ++ D) <> a) ^ '(((B ** A) ++ (C ** A) ++ D) <> b)) P`;;
-g `?a:num b:num P. |-- ('(NEG ((A ** B) ++ (A ** C)) <> a) ^ '((A ** (B ++ C)) <> b)) P`;;
-g `?a:num b:num P. |-- ('(NEG ((A ** ((B ** J) ++ E)) ++ ((A ++ (G ** H)) ** C)) <> a) ^ '(((A ** ((B ** J) ++ E)) ++ ((A ++ (G ** H)) ** C)) <> b)) P`;;
-g `?a:num b:num P. |-- ('(NEG (A ** B ** C) <> a) ^ '(((A ** B ** D) ++ (A ** B ** E) ++ (A ** B ** G) ++ (A ** B ** H) ++ (A ** B ** C)) <> b)) P`;;
-g `?a:num b:num P. |-- ('(NEG (A ** B ** C) <> a) ^ '(((A ** B ** D) ++ (A ** B ** E) ++ (A ** B ** C) ++ (A ** B ** H) ++ (A ** B ** G)) <> b)) P`;;
+g `?a:num b:num P. |-- ('(NEG (A ** (B ** C)) <> a) ^ '(((A ** B) ** C) <> b)) P` ;;
+g `?a:num b:num P. |-- ('(NEG (A ** (B ** D)) <> a) ^ '(((A ** B) ** C) <> b)) P` ;;
+g `?a:num b:num P. |-- ('(NEG (A ** (B ** C)) <> a) ^ '((A ** D) <> b)) P` ;;
+g `?a:num b:num P. |-- ('(NEG (A ** (B ** C)) <> a) ^ '((G ** D) <> b)) P` ;;
+g `?a:num b:num P. |-- ('(NEG (A ** (B ** (C ** D))) <> a) ^ '((G ++ ((A ** B) ** (C ** D))) <> b)) P` ;;
+g `?a:num b:num P. |-- ('(NEG (A ** (B ++ C)) <> a) ^ '((G ++ ((A ** B) ++ (A ** C))) <> b)) P` ;;
+g `?a:num b:num P. |-- ('(NEG (A) <> a) ^ '((A ++ (B ** (C ++ D))) <> b)) P` ;;
+g `?a:num b:num P. |-- ('(NEG (B ** C) <> a) ^ '((A ++ (B ** (C ++ D))) <> b)) P` ;;
+g `?a:num b:num P. |-- ('(NEG (B ** D) <> a) ^ '((A ++ (B ** (C ++ D))) <> b)) P` ;;
+g `?a:num b:num P. |-- ('(NEG (((B ++ C) ** A) ++ D) <> a) ^ '(((B ** A) ++ (C ** A) ++ D) <> b)) P` ;;
+g `?a:num b:num P. |-- ('(NEG ((A ** B) ++ (A ** C)) <> a) ^ '((A ** (B ++ C)) <> b)) P` ;;
+g `?a:num b:num P. |-- ('(NEG ((A ** ((B ** J) ++ E)) ++ ((A ++ (G ** H)) ** C)) <> a) ^ '(((A ** ((B ** J) ++ E)) ++ ((A ++ (G ** H)) ** C)) <> b)) P` ;;
+g `?a:num b:num P. |-- ('(NEG (A ** B ** C) <> a) ^ '(((A ** B ** D) ++ (A ** B ** E) ++ (A ** B ** G) ++ (A ** B ** H) ++ (A ** B ** C)) <> b)) P` ;;
+g `?a:num b:num P. |-- ('(NEG (A ** B ** C) <> a) ^ '(((A ** B ** D) ++ (A ** B ** E) ++ (A ** B ** C) ++ (A ** B ** H) ++ (A ** B ** G)) <> b)) P` ;;
 
 
 e (REPEAT META_EXISTS_TAC);;
@@ -1530,7 +1525,7 @@ e (REPEAT (Cllpi.TAC(Cllpi.llrule Cllpi.ll_par)));;
 e (Cllpi.TAC CLL_PROVE_ETAC);;
 e (Cllpi.TAC Clltac.BUFFER_ETAC);;
 b();;
-instantiate (top_inst(p())) `P:NAgent`;;
+instantiate (top_inst(p())) `P:NAgent` ;;
 
 
 
@@ -1564,7 +1559,7 @@ map (fun t -> exists (aconv t) xmaxasms) xasms';;
 
 let xasms = map (gen_ll_channels o Proc.get_cll) [mypa;mypb];;
 let xlabels = map (fun x -> x.Proc.name) [mypa;mypb];;
-let xnewvar = genvar `:bool`;;
+let xnewvar = genvar `:bool` ;;
 let xglvar = mk_undered_var [xnewvar] xnewvar;;
 let xgltm = mk_exists (xglvar,xglvar);;
 let xgl = itlist (fun x y -> mk_imp (x,y)) xasms xgltm;;
@@ -1683,7 +1678,7 @@ and xstate = Json_comp.to_actionstate (field xtbl "state");;
 
 let xasms = map (gen_ll_channels o Proc.get_cll) xdeps;;
 let xlabels = map (fun x -> x.Proc.name) xdeps;;
-let xnewvar = genvar `:bool`;;
+let xnewvar = genvar `:bool` ;;
 let xglvar = mk_undered_var [xnewvar] xnewvar;;
 let xgltm = mk_exists (xglvar,xglvar);;
 let xgl = itlist (fun x y -> mk_imp (x,y)) xasms xgltm;;
@@ -1986,12 +1981,12 @@ PendingHealthcareService: 0.3719
 
 ;;
 
-REWRITE_CONV [] `a = b + 1 ==> b = x +1 `;;
-REWRITE_CONV [] `a = b + 1 ==> a = x +1 `;;
-SIMP_CONV [] `a = b + 1 ==> b + 1 = x +1 `;;
-SIMP_CONV [] `a = b + 1 ==> a = x +1 `;;
-SIMP_CONV [] `b + 1 = a ==> b + 1 = x +1 `;;
-SIMP_CONV [] `b + 1 = a ==> a = x +1 `;;
+REWRITE_CONV [] `a = b + 1 ==> b = x +1 ` ;;
+REWRITE_CONV [] `a = b + 1 ==> a = x +1 ` ;;
+SIMP_CONV [] `a = b + 1 ==> b + 1 = x +1 ` ;;
+SIMP_CONV [] `a = b + 1 ==> a = x +1 ` ;;
+SIMP_CONV [] `b + 1 = a ==> b + 1 = x +1 ` ;;
+SIMP_CONV [] `b + 1 = a ==> a = x +1 ` ;;
 
 
 (*
@@ -2001,37 +1996,29 @@ SIMP_CONV [] `b + 1 = a ==> a = x +1 `;;
 *)
 
 
-let mypa = Proc.create "Pa" [`A ++ C`;`B ++ (D ** E)`] `C ** (G ++ H)`;;
-let mypb = Proc.create "Pb" [`A`;`B`] `C ++ D`;;
+let mypa = Proc.create "Pa" [`A ++ C`;`B ++ (D ** E)`] `C ** (G ++ H)` ;;
+let mypb = Proc.create "Pb" [`A`;`B`] `C ++ D` ;;
 
-let myst = Actionstate.create 0;;
-let rec add_provs procs st =
-    match procs with
-      | [] -> st
-      | p :: t ->
-	let n,prov = Proc.get_atomic_prov p in
-	add_provs t (Actionstate.add_prov n prov st);;
 let mycomp lbl procs acts =
-  let p,_,s = Proc.compose (add_provs procs myst) lbl procs acts in p,s;;
+  let p,_,s = Proc.compose lbl procs acts in p,s;;
 
 (* ============================================================================= *)
 (* ============================================================================= *)
 (* ============================================================================= *)
 
-let mypa = Proc.create "Pa" [`X`] `A`;;
-let mypb = Proc.create "Pb" [`A`] `Y`;;
+let mypa = Proc.create "Pa" [`X`] `A` ;;
+let mypb = Proc.create "Pb" [`A`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pa" "" "Pb" "(NEG A)" "R1";;
 let myr1 = fst(mycomp "R1" [mypa;mypb] [myact1]);;
 let mybod = rhs myr1.Proc.proc;;
 
 print_string(scala_of_pat mybod);;
 
-let mypc = Proc.create "Pc" [`Y`] `Z`;;
+let mypc = Proc.create "Pc" [`Y`] `Z` ;;
 let myact2 = Action.create "JOIN" "R1" "" "Pc" "(NEG Y)" "R2";;
 let myr2 = fst(mycomp "R2" [myr1;mypc] [myact2]);;
 
 scala_deploy_print "/" "/home/kane/PapPiLib/" "uk.ac.ed.skiexample" "SkiExample" myr2 [mypa;mypb;mypc;myr1] true true;;
-
 
 print_string(scala_proc 0 mypa);;
 print_string(scala_proc 0 mypb);;
@@ -2039,8 +2026,8 @@ print_string(scala_proc 0 myr1);;
 print_string(scala_proc 0 mypc);;
 print_string(scala_proc 0 myr2);;
 
-let mypd = Proc.create "Pd" [`X`] `A ++ (B ** G)`;;
-let mype = Proc.create "Pe" [`B ++ A`] `Y`;;
+let mypd = Proc.create "Pd" [`X`] `A ++ (B ** G)` ;;
+let mype = Proc.create "Pe" [`B ++ A`] `Y` ;;
 let myact1 = Action.create "JOIN" "Pd" "rlr" "Pe" "NEG (B ++ A)" "R3";;
 let myr3 = fst(mycomp "R3" [mypd;mype] [myact1]);;
 let myact1 = Action.create "JOIN" "Pd" "lr" "Pe" "NEG (B ++ A)" "R3b";;
@@ -2052,11 +2039,11 @@ print_string(scala_proc 0 myr3);;
 print_string(scala_proc 0 myr3b);;
 
 
-let selectModel = Proc.create "SelectModel" [`PriceLimit`;`SkillLevel`] `Brand ** Model`;;
-let selectLength = Proc.create "SelectLength" [`HeightCM`;`WeightKG`] `LengthCM`;;
-let cm2Inch = Proc.create "CM2Inch" [`LengthCM`] `LengthInch`;;
-let usd2Nok = Proc.create "USD2NOK" [`PriceUSD`] `PriceNOK`;;
-let selectSki = Proc.create "SelectSki" [`LengthInch`;`Brand`;`Model`] `PriceUSD ++ Exception`;;
+let selectModel = Proc.create "SelectModel" [`PriceLimit`;`SkillLevel`] `Brand ** Model` ;;
+let selectLength = Proc.create "SelectLength" [`HeightCM`;`WeightKG`] `LengthCM` ;;
+let cm2Inch = Proc.create "CM2Inch" [`LengthCM`] `LengthInch` ;;
+let usd2Nok = Proc.create "USD2NOK" [`PriceUSD`] `PriceNOK` ;;
+let selectSki = Proc.create "SelectSki" [`LengthInch`;`Brand`;`Model`] `PriceUSD ++ Exception` ;;
 
 let myact1 = Action.create "JOIN" "SelectLength" "" "CM2Inch" "NEG (LengthCM)" "SLI";;
 let myr1 = mycomp "SLI" [selectModel;selectLength;cm2Inch;usd2Nok;selectSki] [myact1];;
@@ -2080,28 +2067,28 @@ let lhs = Json_comp.to_process (field xtbl "lhs");;
 let rhs = Json_comp.to_process (field xtbl "rhs");;
 let xstate = Json_comp.to_actionstate (field xtbl "state");;
 
-let mypa = Proc.create "Pa" [`N`;`L`] `L ** O`;;
-let mypb = Proc.create "Pb" [`W`] `O ++ N`;;
+let mypa = Proc.create "Pa" [`N`;`L`] `L ** O` ;;
+let mypb = Proc.create "Pb" [`W`] `O ++ N` ;;
 let myact1 = Action.create "JOIN" "Pb" "r" "Pa" "(NEG N)" "R1";;
 let myr1 = fst(mycomp "R1" [mypa;mypb] [myact1]);;
 
-let mypa = Proc.create "Pa" [`N`;`R`] `(R ** Y) ++ E`;;
-let mypb = Proc.create "Pb" [`W`] `Y ++ N`;;
+let mypa = Proc.create "Pa" [`N`;`R`] `(R ** Y) ++ E` ;;
+let mypb = Proc.create "Pb" [`W`] `Y ++ N` ;;
 let myact1 = Action.create "JOIN" "Pb" "r" "Pa" "(NEG N)" "R1";;
 let myr1 = fst(mycomp "R1" [mypa;mypb] [myact1]);;
 
-let mypa = Proc.create "Pa" [`N`] `Y`;;
-let mypb = Proc.create "Pb" [`W`] `Y ++ N`;;
+let mypa = Proc.create "Pa" [`N`] `Y` ;;
+let mypb = Proc.create "Pb" [`W`] `Y ++ N` ;;
 let myact1 = Action.create "JOIN" "Pb" "r" "Pa" "(NEG N)" "R1";;
 let myr1 = fst(mycomp "R1" [mypa;mypb] [myact1]);;
 
-let mypa = Proc.create "Pa" [`N`] `G`;;
-let mypb = Proc.create "Pb" [`W`] `Y ++ N`;;
+let mypa = Proc.create "Pa" [`N`] `G` ;;
+let mypb = Proc.create "Pb" [`W`] `Y ++ N` ;;
 let myact1 = Action.create "JOIN" "Pb" "r" "Pa" "(NEG N)" "R1";;
 let myr1 = fst(mycomp "R1" [mypa;mypb] [myact1]);;
 
-let mypa = Proc.create "Pa" [`N`] `H ++ G ++ Y`;;
-let mypb = Proc.create "Pb" [`W`] `Y ++ N`;;
+let mypa = Proc.create "Pa" [`N`] `H ++ G ++ Y` ;;
+let mypb = Proc.create "Pb" [`W`] `Y ++ N` ;;
 let myact1 = Action.create "JOIN" "Pb" "r" "Pa" "(NEG N)" "R1";;
 let myr1 = fst(mycomp "R1" [mypa;mypb] [myact1]);; (* Keep using plus1 and plus2!! *)
 
@@ -2120,6 +2107,130 @@ Hashtbl.add processes "Pa" mypa;;
 Hashtbl.find processes "Px";;
 
 
-create "Pa" [`N`] `G`;;
-create "Pb" [`W`] `Y ++ N`;;
+create "Pa" [`N`] `G` ;;
+create "Pb" [`W`] `Y ++ N` ;;
 compose1 "JOIN" "Pb" "r" "Pa" "(NEG N)";;
+
+
+module Xrules = Cllrules(Cllpi);;
+Xrules.ll_with_self;;
+(* ------------------------------------------------------------------------------------*)
+
+module Camp = Composer_make(Proc);;
+
+module Jamba = Json_api_make(Camp);;
+module Json_comms = Json_commands(Jamba);;
+Json_comms.load();;
+Jamba.Commands.names();;
+
+module Json_deploy_comms = Json_deploy_commands(Jamba);;
+Json_deploy_comms.load();;
+Jamba.Commands.names();;
+
+
+module Bak = Composer_console_make(Camp);;
+
+Bak.create "Pa" [`X`] `A ** B ** C` ;;
+Bak.create "Pb" [`A`] `D` ;;
+Bak.create "Pc" [`B`] `E` ;;
+Bak.create "Pd" [`C`] `F` ;;
+
+Bak.join "Pa" "lr" "Pb" "(NEG A)";;
+Bak.join "_Step0" "lrr" "Pc" "(NEG B)";;
+Bak.join "_Step1" "r" "Pd" "(NEG C)";;
+
+Bak.store "_Step2" "Res";;
+
+Bak.get "Res";;
+
+Bak.list();;
+Bak.ilist();;
+
+Bak.reset ();;
+Bak.ilist();;
+Bak.load "Res";;
+Bak.list();;
+Bak.ilist();;
+
+
+
+create "Pa" [`X`] `A ** B ** C` ;;
+create "Pb" [`A`] `D` ;;
+create "Pc" [`B`] `E` ;;
+create "Pd" [`C`] `F` ;;
+
+join "Pa" "lr" "Pb" "(NEG A)";;
+join "_Step0" "lrr" "Pc" "(NEG B)";;
+join "_Step1" "r" "Pd" "(NEG C)";;
+
+store "_Step2" "Res";;
+
+get "Res";;
+
+list();;
+ilist();;
+
+reset ();;
+ilist();;
+load "Res";;
+list();;
+ilist();;
+
+responses();;
+map Composer.Response.name (responses());;
+
+json_responses();;
+ 
+Json_composer_io.execute "{\"command\":\"ping\",\"ping\":0.2}";;
+
+run_file (!serv_dir ^ "../examples/toy.ml");;
+run_example "toy";;
+run_example "demo";;
+
+
+Console.Composer.Process.compose1 (Action.create "WITH" "P1" "NEG X" "Q1" "NEG Y" "_StepX") (get "P1") (get "Q1");;
+
+module Piviz = Piviz_make (Console.Composer);;
+let Console.Composer.Response.Deploy (_,myl) = Piviz.deploy (get "R1") [ get "P1" ; get "Q1" ] ;;
+(print_string o snd3 o hd) l;;
+
+create "P" [`X`;`Y++Z`] `A` ;;
+create "Q" [`W`;`Z++Y`] `A` ;;
+cwith "P" "X" "Q" "W";;
+
+create "P" [`X`] `A` ;;
+create "Q" [`W`] `A` ;;
+cwith "P" "X" "Q" "W";;
+
+cwith (demopname () "P") "X" (demopname () "Q") "Y";;
+
+
+
+let PRINT_ETAC st gl = 
+  Actionstate.print st; print_goal gl; ALL_ETAC st gl;;
+
+
+loads "workflowfm/src/make.console.ml";;
+create "P" [`X`] `A ** A ** A ** A` ;;
+create "Q" [`A`;`A`] `Y` ;;
+tensor "Q" "Q";;
+module Clltac = Clltactics(Cllpi);;
+Action.add "JOIN" Clltac.JOIN_TAC;;
+Action.add "TENSOR" Clltac.TENSOR_TAC;;
+Action.add "WITH" Clltac.WITH_TAC;;
+join "P" "lr" "_Step0" "NEG A";; 
+get "_Step0";;
+
+let xchans = [`a:num`;`a:num`;`b:num`];;
+let xins = [`A1 <> (a:num)`;`A2  <> (a:num)`;`B1 <> (b:num)`;`B2 <> (b:num)`; `C <> (c:num)`];;
+let xisOrigInput' inchan input = (rand input) = inchan;;
+filter_once xisOrigInput' xchans xins ;;
+
+get "P35";;
+get "Q35";;
+join "P35" "lrlr" "Q35" "A ++ B";;
+
+filter_once xisOrigInput' [] xins;;
+let xorigInputs inputs = filter_once (fun x y -> x = rand y) xchans inputs;;
+xorigInputs xins;;
+let xchans = [];;

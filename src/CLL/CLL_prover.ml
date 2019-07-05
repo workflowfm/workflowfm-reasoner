@@ -5,7 +5,7 @@
 (*                   Petros Papapanagiotou, Jacques Fleuriot                 *)
 (*              Center of Intelligent Systems and their Applications         *)
 (*                           University of Edinburgh                         *)
-(*                                 2009-2012                                 *)
+(*                                 2009-2019                                 *)
 (* ========================================================================= *)
 
 (* Dependencies *)
@@ -41,15 +41,19 @@ module type Cllproc_type =
 sig
   module Pcalc:Process_calculus
 
-  val cll_to_proc : term->term
-                                (* A converter from a CLL specification      *)
-                                (* (multiset of CLL terms) to a corresponding*)
-                                (* process calculus term.                    *)
-(*  val fake_subs : term -> term  (* A method to calculate substitutions in a  *)
-                                (* term efficiently using OCaml.             *)
-  val prove_subs : term list->term->thm (* A method to prove the correctness *)
-                                (* of the above calculation, given the defs  *)
- *)                              (* of any component agents.                  *)
+  val oper : term
+  val cll_to_proc : term -> term
+  (* A converter from a CLL specification       *)
+  (* (multiset of CLL terms) to a corresponding *)
+  (* process calculus term.                     *)
+
+  (* 
+     val fake_subs : term -> term  (* A method to calculate substitutions in a  *)
+     (* term efficiently using OCaml.             *)
+     val    prove_subs : term list->term->thm (* A method to prove the correctness *)
+   (* of the above calculation, given the defs  *)
+    (* of any component agents.                  *)
+   *)  
 
   val ID_PROC : thm
   val TIMES_PROC : thm
@@ -97,6 +101,7 @@ struct
   module Pcalc = Proc
   let chan_type = Proc.chantp
   let proc_type = Proc.tp
+  let cll_type = type_subst [(Proc.chantp,`:CHANTP`)] `:((CHANTP)LinTerm)multiset`
   let proc_fn = Proc.fn
   let proc_bn = Proc.bn
   let proc_names = Proc.names
@@ -104,6 +109,7 @@ struct
   let proc_bn_conv = Proc.bn_conv
   let proc_names_conv = Proc.names_conv
   let proc_sub_conv = Proc.sub_conv
+
  (* let fake_subs = Proc.fake_subs
   let prove_subs = Proc.prove_subs*)
 
@@ -143,19 +149,19 @@ struct
     let mk_chan (n,i) = linprop_to_chan prefix (string_of_int i) n in
     map mk_chan (zip tms (1--(length tms)))
  		
-  let ID_PROC = new_definition (Cll_terms.mk_id_proc Proc.tp Proc.chantp Proc.llid)
-  let TIMES_PROC = new_definition (Cll_terms.mk_times_proc Proc.tp Proc.chantp Proc.lltimes)
-  let PAR_PROC = new_definition (Cll_terms.mk_par_proc Proc.tp Proc.chantp Proc.llpar)
-  let WITH_PROC = new_definition (Cll_terms.mk_with_proc Proc.tp Proc.chantp Proc.llwith)   
-  let PLUSL_PROC = new_definition (Cll_terms.mk_plusL_proc Proc.tp Proc.chantp Proc.llplusL)  
-  let PLUSR_PROC = new_definition (Cll_terms.mk_plusR_proc Proc.tp Proc.chantp Proc.llplusR)  
-  let CUT_PROC = new_definition (Cll_terms.mk_cut_proc Proc.tp Proc.chantp Proc.llcut)
+  let ID_PROC = new_definition (Cll_terms.mk_id_proc Proc.prefix Proc.tp Proc.chantp Proc.llid)
+  let TIMES_PROC = new_definition (Cll_terms.mk_times_proc Proc.prefix Proc.tp Proc.chantp Proc.lltimes)
+  let PAR_PROC = new_definition (Cll_terms.mk_par_proc Proc.prefix Proc.tp Proc.chantp Proc.llpar)
+  let WITH_PROC = new_definition (Cll_terms.mk_with_proc Proc.prefix Proc.tp Proc.chantp Proc.llwith)   
+  let PLUSL_PROC = new_definition (Cll_terms.mk_plusL_proc Proc.prefix Proc.tp Proc.chantp Proc.llplusL)  
+  let PLUSR_PROC = new_definition (Cll_terms.mk_plusR_proc Proc.prefix Proc.tp Proc.chantp Proc.llplusR)  
+  let CUT_PROC = new_definition (Cll_terms.mk_cut_proc Proc.prefix Proc.tp Proc.chantp Proc.llcut)
 
   let CLL_PROCS = [ID_PROC;TIMES_PROC;PAR_PROC;WITH_PROC;PLUSL_PROC;PLUSR_PROC;CUT_PROC]
 
   let linear_RULES,linear_INDUCT,linear_CASES =
     new_inductive_definition (
-    Cll_terms.mk_cll_rules Proc.tp Proc.chantp
+    Cll_terms.mk_cll_rules Proc.consequence Proc.tp Proc.chantp
 			   ID_PROC TIMES_PROC PAR_PROC WITH_PROC PLUSL_PROC PLUSR_PROC CUT_PROC)
   let [ll_id;
        ll_times;
@@ -165,6 +171,9 @@ struct
        ll_cut ] = 
     map (MIMP_RULE o SPEC_ALL o REWRITE_RULE[IMP_CONJ]) 
       (CONJUNCTS linear_RULES)
+
+  let oper = (fst o strip_comb o concl) ll_id
+
   
   (* ========================================================================= *)
       
@@ -173,8 +182,8 @@ struct
   let (string_of_cll:term -> string) =
     fun tm ->
       let c,args = strip_comb tm in
-	try let _ = term_match [] `(|--)` c in 
-	  ("|-- " ^ (string_of_term (hd args)) ^ " (...)")
+	try let _ = term_match [] oper c in 
+	  (Proc.consequence ^ (string_of_term (hd args)) ^ " (...)")
 	with Failure _ -> failwith "Not a CLL judgement."
 
 
@@ -190,7 +199,7 @@ struct
 (* Creates the CLL |-- statement/speficiation of the given process.          *)
 (* ------------------------------------------------------------------------- *)
 
-  let mk_cll cll proc_call = list_mk_icomb "|--" [cll;proc_call]
+  let mk_cll cll proc = list_mk_comb (oper,[try_type cll_type cll;try_type proc_type proc])
 
 (* ------------------------------------------------------------------------- *)
 (* Creates a multiset of CLL terms corresponding to a process with a list of *)
@@ -237,7 +246,7 @@ let mk_linprop tm = try_type `:LinProp` tm in
 let (process_of_term:term -> term) =
   fun tm ->
     let c,args = strip_comb tm in
-    try let _ = term_match [] `(|--)` c in (hd o tl) args
+    try let _ = term_match [] oper c in (hd o tl) args
     with Failure _ -> failwith "Inappropriate term"
 
 
@@ -252,13 +261,13 @@ let (process_of_asm:string -> goalstack -> term) =
 (* ------------------------------------------------------------------------- *)
 
 let llcut_tac =
-  fun setlist thm (i,metas) ->
+  fun setlist thm (lbl,i,metas) ->
     let thm = (UNDISCH_ALL o MIMP_TO_IMP_RULE o SPEC_ALL) thm in
     let primed_ll_cut = inst_meta_rule_vars [] (mk_meta_rule ll_cut) (thm_frees thm) in
     let cut_term = (hd o tl o hyp o thd3) primed_ll_cut in
     let cut_ins = seq_match (thm_frees thm) metas cut_term (concl thm) in
     let new_rule = inst_meta_rule (cut_ins) primed_ll_cut in
-    apply_seqtac rulem_seqtac setlist new_rule (i,metas)
+    apply_seqtac rulem_seqtac setlist new_rule (lbl,i,metas)
 
 
 (*

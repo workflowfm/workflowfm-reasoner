@@ -26,6 +26,11 @@ sig
                            (* informally but efficiently. *) 
 
   (* CLL correspondence: *)
+
+  (* A string for the consequence operator so that we can have multiple embeddings *)
+  val consequence : string
+  (* A string to prefix process definitions so they are unique. *)
+  val prefix : string
   (* Identity: llid A x y m <-> |- x:A^, y:A for message m                   *)
   val llid : term->term->term->term->term
   (* Times: lltimes A B z x y P Q                                            *)
