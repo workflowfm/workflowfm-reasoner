@@ -8,7 +8,7 @@
    2019                                
  ========================================================================= *)
 
-needs (!hol_dir ^ "/workflowfm/src/make.console.ml");;
+needs (!hol_dir ^ "/workflowfm/make.console.ml");;
 
 
 let democounter = ref 1;;
