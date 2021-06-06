@@ -4,8 +4,7 @@
 [[../../releases/latest][https://img.shields.io/badge/version-0.6.1-brightgreen.svg]]
 [[https://opensource.org/licenses/Apache-2.0][https://img.shields.io/badge/license-Apache%202.0-yellowgreen.svg]]
 
-A [[https://github.com/jrh13/hol-light][HOL Light]] library for process modelling and composition using Classical [[https://en.wikipedia.org/wiki/Linear_logic][Linear Logic]] (CLL) reasoning.
-
+A logic-based library for correct-by-construction process modelling and composition. 
 
 | Created by [[https://github.com/PetrosPapapa][Petros Papapanagiotou]] |
 | [[https://aiml.inf.ed.ac.uk/][Artificial Intelligence Modelling Lab]] |
@@ -16,7 +15,7 @@ This is part of the [[https://github.com/workflowfm/][WorkflowFM]] framework for
 
 * About
 
-This library allows for rigorous, formally verified process specification and composition. Processes can be specified based on the types of their input and output resources, using CLL sequents. Composition can then be achieved using forward chaining/inference of CLL rules.
+This is a [[https://github.com/jrh13/hol-light][HOL Light]] library that allows for rigorous, formally verified process specification and composition. Processes can be specified based on the types of their input and output resources, using Classical [[https://en.wikipedia.org/wiki/Linear_logic][Linear Logic]] (CLL) sequents. Composition can then be achieved using forward chaining/inference of CLL rules.
 
 Inference can be applied directly using the standard HOL Light interactive proof setting and the [[https://github.com/PetrosPapapa/hol-light-embed][embed library]]. Alternatively, the WorkflowFM Reasoner also provides its own interface with intuitive commands that greatly facilitate process specification and composition.
 
@@ -31,7 +30,7 @@ The constructed workflows can be exported either for visualization using the [[h
 
 The [[#references][references]] provide more in depth details of the theory behind the WorkflowFM Reasoner.
 
-** Features
+** Key Features
    - Process specification using Classical Linear Logic (CLL).
    - Process composition using formally verified forward inference.
    - Interactive theorem proving in CLL.
