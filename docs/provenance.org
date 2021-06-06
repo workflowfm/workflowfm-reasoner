@@ -3,6 +3,7 @@
 #+EMAIL: petrospapapan@gmail.com
 #+OPTIONS: toc:2
 #+EXCLUDE_TAGS: noexport
+#+STARTUP: inlineimages
 
 * Example
 
