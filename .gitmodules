@@ -1,0 +1,3 @@
+[submodule "hugo-compose-theme"]
+	path = docs/themes/compose
+	url = https://github.com/onweru/compose/

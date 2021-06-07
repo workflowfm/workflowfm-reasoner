@@ -1,5 +1,6 @@
 #+TITLE: WorkflowFM Reasoner
 #+AUTHOR: Petros Papapanagiotou
+#+OPTIONS: toc:nil
 
 [[../../releases/latest][https://img.shields.io/badge/version-0.6.1-brightgreen.svg]]
 [[https://opensource.org/licenses/Apache-2.0][https://img.shields.io/badge/license-Apache%202.0-yellowgreen.svg]]
@@ -37,7 +38,7 @@ The [[#references][references]] provide more in depth details of the theory behi
    - Intuitive high-level actions for sequential, conditional, and parallel composition.
    - Proof translation to [[https://en.wikipedia.org/wiki/%CE%A0-calculus][\pi-calculus]].
    - Modular encoding allows different CLL translations (e.g. to session types), automatically reconstructing the entire process reasoning framework.
-   - Tracking of [[docs/provenance.org][provenance metadata]] during proof to guide visualization.
+   - Tracking of [[./docs/provenance.org][provenance metadata]] during proof to guide visualization.
    - Export \pi-calculus to [[http://frapu.de/bpm/piviztool.html][PiVizTool]] format.
    - Export Scala code to execute workflows using the [[http://docs.workflowfm.com/pew][PEW engine]].
    - Modular API allows extensions with new composition actions, export options and commands.
@@ -61,12 +62,12 @@ Requirements:
 Install by cloning the repository to a ~workflowfm/~ directory within HOL Light.
 
 Once you have HOL Light up and running, you can load the reasoner in *console mode* using the following command:
-#+BEGIN_SRC ocaml
+#+BEGIN_SRC ocaml :eval no
 loads (!hol_dir ^ "/workflowfm/make.console.ml");;
 #+END_SRC 
 
 If you need to use the *JSON mode*, you can use this command instead:
-#+BEGIN_SRC ocaml
+#+BEGIN_SRC ocaml :eval no
 loads (!hol_dir ^ "/workflowfm/make.ml");;
 #+END_SRC 
 
@@ -103,7 +104,7 @@ Sample of other relevant references:
 
 * License
 
-Distributed under the Apache 2.0 license. See [[LICENSE]] for more information.
+Distributed under the Apache 2.0 license. See [[./LICENSE]] for more information.
 
 Copyright \copy 2009-2021 [[https://www.ed.ac.uk/][The University of Edinburgh]] and [[#authors][contributors]]
 

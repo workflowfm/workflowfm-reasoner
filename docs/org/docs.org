@@ -1,0 +1,178 @@
+#+TITLE: Documentation
+#+AUTHOR: Petros Papapanagiotou
+#+EMAIL: petros@workflowfm.com
+#+OPTIONS: toc:nil email:t 
+#+EXCLUDE_TAGS: noexport
+#+PROPERTY: header-args :results output drawer :session workflowfm :exports both :eval no-export :dir ../../
+#+HUGO_AUTO_SET_LASTMOD: t
+
+#+HUGO_BASE_DIR: ../
+#+HUGO_SECTION: docs
+
+
+* Reference
+  :PROPERTIES:
+  :EXPORT_FILE_NAME: _index
+  :EXPORT_HUGO_MENU: :menu "main" :weight 100
+  :END:
+
+Welcome to the WorkflowFM Reasoner documentation. 
+
+{{< button "./getting-started/" "Get started" >}}
+* Install
+:PROPERTIES:
+:EXPORT_HUGO_SECTION*: install
+:END:
+
+** Installation
+   :PROPERTIES:
+   :EXPORT_FILE_NAME: _index
+   :EXPORT_HUGO_WEIGHT: 101
+   :END:
+
+The WorkflowFM Reasoner is implemented within the interactive theorem proving environment of [[https://github.com/jrh13/hol-light][HOL Light]]. 
+
+It also depends on 3 additional libraries that need to be present in the HOL Light directory.
+
+We have a repository set up for a quick configuration, or you can install everything manually.
+
+** Setup
+   :PROPERTIES:
+   :EXPORT_FILE_NAME: setup
+   :EXPORT_HUGO_WEIGHT: 110
+   :END:
+*** Quick setup
+
+ Clone the following repository:
+ https://github.com/workflowfm/hol-light
+
+ #+BEGIN_SRC sh :eval no
+ git clone https://github.com/workflowfm/hol-light.git
+ #+END_SRC
+
+ Then make sure all the submodules are initialised and updated:
+ #+BEGIN_SRC sh :eval no
+ git submodule update --init --recursive
+ #+END_SRC
+
+
+*** Manual setup
+
+ Assuming an existing installation of HOL Light, you can setup the reasoner manually by installing the following libraries:
+
+ 1. The [[https://bitbucket.org/petrospapapa/isabelle-light][Isabelle Light]] library. This also comes bundled with HOL Light by default.
+ 2. Additional [[https://github.com/PetrosPapapa/hol-light-tools][HOL Light tools]]. This consists of useful snippets of code, libraries, and theorems. This should be installed in a =tools/= directory within HOL Light.
+ 3. The [[https://github.com/PetrosPapapa/hol-light-embed][HOL Light embed]] library which enables reasoning with encoded logics. This should be installed in a ~embed/~ directory within HOL Light.
+
+ {{< tip "warning">}}
+ It is important to use the correct directory names, as the reasoner will seek to load specific files from each library.
+ {{< /tip >}}
+
+ Finally, install the reasoner itself by cloning the repository to a ~workflowfm/~ directory within HOL Light:
+ #+BEGIN_SRC sh :eval no
+ git clone https://github.com/workflowfm/workflowfm-reasoner.git worklfowfm
+ #+END_SRC
+
+** Install HOL Light
+   :PROPERTIES:
+   :EXPORT_FILE_NAME: hol-light
+   :EXPORT_HUGO_WEIGHT: 120
+   :END:
+
+You can install HOL Light by following its [[https://github.com/jrh13/hol-light/blob/master/READM][standard installation instructions]].
+
+We have included our own notes below in case they are helpful.
+
+{{< tip >}}
+Specific tips for DICE users at the University of Edinburgh are included below.
+{{< /tip >}}
+
+*** Install OCaml
+
+OCaml 4.07.0 minimum is required. The easiest way to install this is through [[http://opam.ocaml.org/][opam]].
+
+{{< tip >}}
+On DICE, opam can be compiled from source and installed locally. It is better to use a locally installed OCaml than the centrally available one.
+{{< /tip >}}
+
+You also need to install the `num` and `camlp5` packages:
+
+#+BEGIN_SRC sh :eval no
+opam install num camlp5
+#+END_SRC
+
+In many cases (including on DICE) the toplevel loads ~camlp4~. In order to load ~camlp5~ by default, you need to edit the ~.ocamlinit~ file in your home directory (opam usually creates one, otherwise add it yourself). Add the following to that file:
+
+#+BEGIN_SRC ocaml :eval no
+#use "topfind";;
+#require "camlp5";;
+#load "camlp5o.cma";;
+#+END_SRC
+
+Running ~ocaml~ should give you a ~Camlp5 parsing version ...~ at the end.
+
+*** Run HOL Light
+
+To install/run HOL Light, first create the ~pa_j.ml~ file:
+
+#+BEGIN_SRC sh :eval no
+make
+#+END_SRC
+
+The run ~ocaml~ and load HOL Light:
+
+#+BEGIN_SRC ocaml :eval no
+#use "hol.ml";;
+#+END_SRC
+
+
+*** Checkpointing
+
+Checkpointing eliminates loading times, which are otherwise relatively long, especially when you need to restart HOL Light during development.
+
+We have been using [[http://dmtcp.sourceforge.net/][DMTCP]]. Unfortunately, newer versions seem to be failing with HOL Light in a number of different platforms, but it is still worth trying.
+
+{{< tip >}}
+Version 2.0.0 and above does not seem to work on DICE. Try [[https://sourceforge.net/projects/dmtcp/files/dmtcp/1.2.4/][version 1.2.4]].
+{{< /tip >}}
+
+Once you have installed DMTCP, you can create the checkpoint as follows:
+
+#+BEGIN_SRC sh :eval no
+dmtcp_checkpoint ocaml
+#+END_SRC
+
+Then load HOL Light as usual:
+
+#+BEGIN_SRC ocaml :eval no
+#use "hol.ml";;
+#+END_SRC
+
+Wait for it to finish, then open a new terminal and checkpoint:
+
+#+BEGIN_SRC sh :eval no
+dmtcp_command -c
+#+END_SRC
+
+There is no notification when the checkpoint is complete other than the appearance of the ~dmtcp_restart_script.sh~ shortcut. You can then kill/exit OCaml.
+
+Running ~dmtcp_restart_script.sh~ should load the checkpoint from where you left it. Issue a command to HOL Light/OCaml to make sure it works.
+
+Subsequent uses of ~dmtcp_command -c~ will update your checkpoint. 
+
+
+** Loading the reasoner
+   :PROPERTIES:
+   :EXPORT_FILE_NAME: load
+   :EXPORT_HUGO_WEIGHT: 130
+   :END:
+   
+Once you have HOL Light up and running, you can load the reasoner in *console mode* using the following command:
+#+BEGIN_SRC ocaml :eval no
+loads (!hol_dir ^ "/workflowfm/make.console.ml");;
+#+END_SRC 
+
+If you need to use the *JSON mode*, you can use this command instead:
+#+BEGIN_SRC ocaml :eval no
+loads (!hol_dir ^ "/workflowfm/make.ml");;
+#+END_SRC 
