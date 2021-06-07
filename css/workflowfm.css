@@ -1,0 +1,15 @@
+.nomargin {
+    margin: 0;
+}
+
+code {
+    display: inline;
+}
+
+pre.chroma code {
+    display: block;
+}
+
+.tip_warning {
+    border-color: red;
+}
