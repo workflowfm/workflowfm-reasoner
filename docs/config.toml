@@ -1,4 +1,4 @@
-baseURL = "https://dev.workflowfm.com/workflowfm-reasoner/"
+baseURL = "http://docs.workflowfm.com/workflowfm-reasoner/"
 title = "WorkflowFM Reasoner"
 enableRobotsTXT = true
 # this example loads the theme as hugo module

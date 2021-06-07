@@ -14,6 +14,8 @@ A logic-based library for correct-by-construction process modelling and composit
 
 This is part of the [[https://github.com/workflowfm/][WorkflowFM]] framework for correct-by-construction process and resource workflows.
 
+[[http://docs.workflowfm.com/workflowfm-reasoner][More info and documentation can be found in the main webpage.]]
+
 * About
 
 This is a [[https://github.com/jrh13/hol-light][HOL Light]] library that allows for rigorous, formally verified process specification and composition. Processes can be specified based on the types of their input and output resources, using Classical [[https://en.wikipedia.org/wiki/Linear_logic][Linear Logic]] (CLL) sequents. Composition can then be achieved using forward chaining/inference of CLL rules.
@@ -48,18 +50,21 @@ The [[#references][references]] provide more in depth details of the theory behi
    - *Console*: This mode is intended for standard use within HOL Light, i.e. at the OCaml toplevel. It provides a minimal console interface for process modelling and composition.
    - *JSON*: This mode is intended for use within a server environment, to allow interaction with web applications (including UIs). It expects input and produces output encoded in [[https://en.wikipedia.org/wiki/JSON][JSON]] format.
 
-* Install
+* Quick Install
 
-*Please note it is important to use the correct directory names, as the reasoner will seek to load specific files from each library.*
+ Clone the following HOL Light fork:
+ https://github.com/workflowfm/hol-light
 
-Requirements:
-1. OCaml 4.07.0 minimum. The easiest way to install this is through [[http://opam.ocaml.org/][opam]].
-2. The [[https://github.com/jrh13/hol-light][HOL Light]] theorem prover. It comes with its own [[https://github.com/jrh13/hol-light/blob/master/README][installation instructions]].
-3. The [[https://bitbucket.org/petrospapapa/isabelle-light][Isabelle Light]] library. This also comes bundled with HOL Light by default.
-4. Additional [[https://github.com/PetrosPapapa/hol-light-tools][HOL Light tools]]. This consists of useful snippets of code, libraries, and theorems. This should be installed in a ~tools/~ directory within HOL Light.
-5. The [[https://github.com/PetrosPapapa/hol-light-embed][HOL Light embed]] library which enables reasoning with encoded logics. This should be installed in a ~embed/~ directory within HOL Light.
+ #+BEGIN_SRC sh :eval no
+ git clone https://github.com/workflowfm/hol-light.git
+ #+END_SRC
 
-Install by cloning the repository to a ~workflowfm/~ directory within HOL Light.
+ Then make sure all the submodules are initialised and updated:
+ #+BEGIN_SRC sh :eval no
+ git submodule update --init --recursive
+ #+END_SRC
+
+Install HOL Light following its [[https://github.com/jrh13/hol-light/blob/master/READM][standard installation instructions]].
 
 Once you have HOL Light up and running, you can load the reasoner in *console mode* using the following command:
 #+BEGIN_SRC ocaml :eval no
@@ -71,6 +76,7 @@ If you need to use the *JSON mode*, you can use this command instead:
 loads (!hol_dir ^ "/workflowfm/make.ml");;
 #+END_SRC 
 
+More detailed installation instructions are available at [[http://docs.workflowfm.com/workflowfm-reasoner/docs/install/][this link]].
 
 * Authors
 :PROPERTIES:
