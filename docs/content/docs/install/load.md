@@ -1,7 +1,7 @@
 ---
 title: "Loading the reasoner"
 author: ["Petros Papapanagiotou"]
-lastmod: 2021-06-07T14:08:33+01:00
+lastmod: 2021-06-08T00:15:35+01:00
 draft: false
 weight: 130
 ---

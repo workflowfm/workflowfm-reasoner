@@ -16,9 +16,20 @@
   :EXPORT_HUGO_MENU: :menu "main" :weight 100
   :END:
 
-Welcome to the WorkflowFM Reasoner documentation. 
+Welcome to the *WorkflowFM Reasoner documentation*. This is a [[https://github.com/jrh13/hol-light][HOL Light]] library that allows for rigorous, formally verified process specification and composition. Processes can be specified based on the types of their input and output resources, using Classical [[https://en.wikipedia.org/wiki/Linear_logic][Linear Logic]] (CLL) sequents. Composition can then be achieved using forward chaining/inference of CLL rules.
 
-{{< button "./getting-started/" "Get started" >}}
+Inference can be applied directly using the standard HOL Light interactive proof setting and the [[https://github.com/PetrosPapapa/hol-light-embed][embed library]]. Alternatively, the WorkflowFM Reasoner also provides its own interface with intuitive commands that greatly facilitate process specification and composition.
+
+CLL proofs are annotated with [[https://en.wikipedia.org/wiki/%CE%A0-calculus][\pi-calculus]] process terms based on the [[https://www.sciencedirect.com/science/article/pii/0304397594001030][proofs-as-processes]] paradigm. These provide an executable translation of the logical composition. The resulting workflows are *correct-by-construction* with the following verified properties:
+
+- *Systematic resource accounting*: The linearity of CLL guarantees that no resources appear out of nowhere or disappear into thin air.
+- *Deadlock and livelock freedom*: The proofs-as-processes paradigm guarantees that the constructed workflows have no deadlocks or livelocks.
+- *Type checked composition*: Even though the generated \pi-calculus term is untyped, the correctness of the types of all connected resources is ensured via the logical proof.
+- *Fully asynchronous and concurrent execution*: The \pi-calculus naturally offers a workflow execution style where each component process can be executed fully asynchronously (see the [[http://docs.workflowfm.com/pew][PEW engine]] for more details) and concurrently, without introducing any conflicts, race conditions, or deadlocks.
+
+The constructed workflows can be exported either for visualization using the [[http://frapu.de/bpm/piviztool.html][PiVizTool]] or as Scala code for execution using the [[http://docs.workflowfm.com/pew][PEW engine]].
+
+{{< button "./install/" "Get started" >}}
 * Install
 :PROPERTIES:
 :EXPORT_HUGO_SECTION*: install
@@ -176,3 +187,133 @@ If you need to use the *JSON mode*, you can use this command instead:
 #+BEGIN_SRC ocaml :eval no
 loads (!hol_dir ^ "/workflowfm/make.ml");;
 #+END_SRC 
+
+
+* Elements
+:PROPERTIES:
+:EXPORT_HUGO_SECTION*: elements
+:END:
+
+** Elements
+   :PROPERTIES:
+   :EXPORT_FILE_NAME: _index
+   :EXPORT_HUGO_WEIGHT: 200
+   :END:
+
+This section covers some basic elements, concepts, and terminology used in the WorkflowFM Reasoner. This includes logical terms, process specifications, composition actions, and much more.
+
+** Resources
+   :PROPERTIES:
+   :EXPORT_FILE_NAME: resources
+   :EXPORT_HUGO_WEIGHT: 210
+   :END:
+
+Processes are specified based on their input and output resources. Each resource is specified by its type and a \pi-calculus channel that receives or sends it. 
+
+*** Resource types
+Resource types are specified by a proposition in linear logic. In HOL Light these are propositions of type ~`:LinProp`~.
+
+Resource types can be composed using the following logical connectives:
+| Connective | HOL Light Syntax | Interpretation                                      |
+|    <c>     |       <c>        | <l>                                                 |
+|------------+------------------+-----------------------------------------------------|
+|   A \otimes B    |      A ** B      | Two resources A and B in parallel.                  |
+|   A \oplus B    |      A ++ B      | Optional resource of either type A or B (not both). |
+
+Different combinations of these operators can be used to express composite resource types of arbitrary complexity.
+
+Typically, composite resource types involving these 2 operators represent *output* resources. In contrast, *input* resources are expressed as the /negation/ of output resources, using the operator ~NEG~. 
+
+For exmaple, this means the type ~`NEG (A ** B)`~ represents two parallel /input/ resources.
+
+Negated duals of the \otimes and \oplus operators do exist and are as follows:
+
+| Connective |    Dual     | HOL Light Syntax |
+|    <c>     |     <c>     |       <c>        |
+|------------+-------------+------------------|
+|   A \otimes B    | A &#8523; B |      A % B       |
+|   A \oplus B    |    A & B    |      A & B       |
+
+For example, this makes the followning expressions equivalent:
+~NEG (A ** B) = NEG A % NEG B~
+
+However, the reasoner is developed to work with /polarized/ types, i.e. resource types that only use the \otimes and \oplus connectives and the negations of such types. 
+
+{{< tip warning >}}
+Mixing up input and output connectives and arbitrary negations may lead to unpredictable results.
+{{< /tip >}}
+
+This means that, for process specification and composition, you are expected to use atomic resource types or composite ones with the \otimes and \oplus operators. If you need to explicitly state that a resource type is an /input/, then negate the whole term using ~NEG()~.
+
+The reasoner often allows you to not even use ~NEG~ when a resource type is unambiguously expected to be an input.
+
+*** Channels
+
+Each resource type in a process specification is either received (input) or sent (output) through a \pi-calculus channel. Generally, the reasoner aims to minimize the user's interaction with \pi-calculus components. In the case of channels, the reasoner will automatically generate appropriate channel names for each resource. We present the channel syntax here for reference when it appears in various results.
+
+{{< tip >}}
+We say that a resource type or proposition is /annotated/ with a \pi-calculus channel to form a /term/. 
+{{< /tip >}}
+
+At a high level, annotations simply appear as pairs of resource types and channels.
+
+At the logic level, the corresponding type of a /term/ in HOL Light is ~`:(num)LinTerm`~.
+
+Note the use of numbers (~num~) in that type. This represents the type of channels, which in principle could be any desired HOL Light type. Numbers make many reasoning tasks easier, though for the most part in practice we work with named variables for channels.
+
+Resource annotation is accomplished in the logic with the HOL Light operator ~<>~. 
+
+For example, the term ~`(A ** B) <> c`~ represents a channel ~c~ carrying an /output/ resource of type ~A ** B~ or, more specifically, /two/ output resources of type s ~A~ and ~B~ respectively in parallel.
+
+** Actions
+   :PROPERTIES:
+   :EXPORT_FILE_NAME: actions
+   :EXPORT_HUGO_WEIGHT: 220
+   :END:
+
+Before we introduce process specifications, we need to discuss how composition is broken down into binary /actions/ and how /state/ is managed for each action.
+
+*** Actionstate
+
+Each composition action corresponds to a reasoning tactic implemented in HOL Light. These tactics require an extended proof state to function appropriately. This is extension is captured iusing the ~Actionstate~ structure.
+
+{{< tip >}}
+The user is not required to manipulate the actionstate themselves, unless they perform low level proofs.
+{{< /tip >}}
+
+The final actionstate resulting from a composition proof is provided within the reasoner's response, so it may be useful to explain its structure briefly here.
+
+The ~Actionstate~ structure is [[https://github.com/workflowfm/workflowfm-reasoner/blob/master/src/processes/actions.ml][defined as follows]]:
+
+#+BEGIN_SRC ocaml :eval no
+module Actionstate = struct
+  type t = {
+      label : string;
+      ctr : int;
+      metas : term list;
+      merged : (term * string * string) list;
+      iprov : (term * provtree) list;
+      prov : (string * provtree) list;
+    }
+
+(* ... *)
+end;;
+#+END_SRC
+
+The fields can be described briefly as follows:
+| Field              | Description                                                                           |
+|--------------------+---------------------------------------------------------------------------------------|
+| ~label~            | A unique name for the given composition, typically the name of the resulting process. |
+| ~ctr~              | A unique counter for each reasoning step during composition.                          |
+| ~metas~            | A list of metavariables used during composition.                                      |
+| ~merged~           | A list of merged inputs during a conditional composition.                             |
+| ~iprov & prov~     | [[../provenance][Provenance tracking]] for inputs and outputs respectively.                             |
+
+The unique name and counter are used to guarantee uniqueness of introduced channel names.
+
+Merged inputs occur during conditional composition, when both processes have the same input type, so that the final composition does not duplicate inputs. Each entry consists of the input term as it appears in the composition paired with the names of the 2 input channels that got merged.
+
+*** Actions
+
+
+
