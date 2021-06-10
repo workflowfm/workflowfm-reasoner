@@ -27,7 +27,7 @@ This section covers some basic elements, concepts, and terminology used in the W
 Processes are specified based on their input and output resources. Each resource is specified by its type and a \pi-calculus channel that receives or sends it. 
 
 ** Resource types
-Resource types are specified by a proposition in linear logic. In HOL Light these are propositions of type ~`:LinProp`~.
+Resource types are specified by a proposition in linear logic. [[https://github.com/workflowfm/workflowfm-reasoner/blob/master/src/CLL/CLL.ml][In HOL Light]] these are propositions of type ~`:LinProp`~.
 
 {{< tip >}}
 Resource type names need to follow the same naming restrictions as HOL Light variables, i.e. they need to start with a letter and contain only letters and numbers.
@@ -81,7 +81,7 @@ At the logic level, the corresponding type of a /term/ in HOL Light is ~`:(num)L
 
 Note the use of numbers (~num~) in that type. This represents the type of channels, which in principle could be any desired HOL Light type. Numbers make many reasoning tasks easier, though for the most part in practice we work with named variables for channels.
 
-Resource annotation is accomplished in the logic with the HOL Light operator ~<>~. 
+Resource annotation is accomplished [[https://github.com/workflowfm/workflowfm-reasoner/blob/master/src/CLL/CLL.ml][in the logic]] with the HOL Light operator ~<>~. 
 
 For example, the term ~`(A ** B) <> c`~ represents a channel ~c~ carrying an /output/ resource of type ~A ** B~ or, more specifically, /two/ output resources of type s ~A~ and ~B~ respectively in parallel.
 * Processes
@@ -92,7 +92,7 @@ For example, the term ~`(A ** B) <> c`~ represents a channel ~c~ carrying an /ou
 
 Processes are defined based on their input and outputs [[#resources][resources]], as well as some additional metadata.
 
-The full process data structure is the following:
+The [[https://github.com/workflowfm/workflowfm-reasoner/blob/master/src/processes/processes.ml][full process data structure]] is the following:
 
 #+BEGIN_SRC ocaml :eval no
 module type Process_type =
@@ -233,7 +233,7 @@ The fields can be described briefly as follows:
 | ~ctr~              | A unique counter for each reasoning step during composition.                          |
 | ~metas~            | A list of metavariables used during composition.                                      |
 | ~merged~           | A list of merged inputs during a conditional composition.                             |
-| ~iprov & prov~     | [[../provenance][Provenance tracking]] for inputs and outputs respectively.                             |
+| ~iprov & prov~     | [[#provenance][Provenance tracking]] for inputs and outputs respectively.                             |
 
 The unique name and counter are used to guarantee uniqueness of introduced channel names.
 
@@ -314,6 +314,18 @@ Provenance
     | \      
     C  D   
  #+END_EXAMPLE
+
+[[https://github.com/workflowfm/workflowfm-reasoner/blob/master/src/processes/provenance.ml][In the reasoner]], provenance trees are defined with a custom data type as follows:
+
+#+BEGIN_SRC ocaml :eval no
+type provtree =
+  Provnode of string * provtree * provtree
+  | Provleaf of string;;
+#+END_SRC
+
+Nodes of \otimes are labelled ~"times"~, while \oplus nodes are labelled ~"plus"~.
+
+Based on this, the above example provenance tree would be represented as ~Provnode ("times", Provleaf "P1", Provleaf "P2")~.
 
 ** Output Provenance
 
