@@ -332,7 +332,7 @@ These reasoning processes follow the rules of linear logic in a formally verifie
       {Action.act = "WITH"; larg = "P"; lsel = "X"; rarg = "Q"; rsel = "Y"; res = "R"}
     #+END_SRC
 
-    It is worth noting the output type of the composite process, namely ~((A ++ B) ** Z) ++ C~. This is an /optional/ output consisting of the outputs ~A++ B~ and ~C~ of the two components, each of which may be produced depending on which process is executed at runtime. 
+    It is worth noting the output type of the composite process, namely ~((A ++ B) ** Z) ++ C~. This is an /optional/ output consisting of the outputs ~A ++ B~ and ~C~ of the two components, each of which may be produced depending on which process is executed at runtime. 
 
     Note, however, that the output ~A ++ B~ is paired with a new output ~Z~. This corresponds to the second input ~Z~ of ~Q~. This needs to still be an input in the composite process ~R~ because without it ~Q~ would not be able to execute. However, if ~P~ is executed then the input ~Z~ will not be used.
 

@@ -1,0 +1,147 @@
+#+TITLE: Console
+#+AUTHOR: Petros Papapanagiotou
+#+EMAIL: petros@workflowfm.com
+#+OPTIONS: toc:nil email:t 
+#+EXCLUDE_TAGS: noexport
+#+PROPERTY: header-args :results output drawer :session workflowfm :exports both :eval no-export :dir ../../
+#+HUGO_AUTO_SET_LASTMOD: t
+
+#+HUGO_BASE_DIR: ../
+#+HUGO_SECTION: docs/console
+
+* Console
+  :PROPERTIES:
+  :EXPORT_FILE_NAME: _index
+  :EXPORT_HUGO_WEIGHT: 300
+  :END:
+
+This section covers the use of the reasoner through the console command interface running at the OCaml/HOL Light toplevel. This includes the available commands and responses.
+
+The entire interface is structured as the following module type:
+#+BEGIN_SRC ocaml :eval no
+module type Composer_console_type =
+    sig
+      module Composer : Composer_type
+
+      val responses : unit -> Composer.Response.t list
+
+      val add_process : Composer.Process.t -> Composer.Process.t
+      val get_process : string -> Composer.Process.t
+      val exists_process : string -> bool
+      val del_process : string -> unit
+      val reset_processes : unit -> unit
+      val list : unit -> string list
+
+      val add_intermediate : Composer.Process.t -> Composer.Process.t
+      val get_intermediate : string -> Composer.Process.t
+      val exists_intermediate : string -> bool
+      val del_intermediate : string -> unit
+      val reset_intermediates : unit -> unit
+      val ilist : unit -> string list
+
+      val get : string -> Composer.Process.t
+
+      val resetstep : unit -> unit
+      val reset : unit -> unit
+      val full_reset : unit -> unit
+
+      val create : string -> term list -> term -> Composer.Response.t
+      val compose1 : Action.t -> Composer.Response.t
+      val tensor : string -> string -> Composer.Response.t
+      val cwith : string -> string -> string -> string -> Composer.Response.t
+      val join : string -> string -> string -> string -> Composer.Response.t
+
+      val store : string -> string -> Composer.Response.t
+      val load : string -> unit
+    end ;;
+#+END_SRC
+
+Each of these functions/commands is explained in more detail in the next sections.
+
+* State
+  :PROPERTIES:
+  :EXPORT_FILE_NAME: state
+  :EXPORT_HUGO_WEIGHT: 310
+  :END:
+
+The console maintains an internal state of the introduced processes and compositions. This includes a list of atomic and stored processes and a separate list of intermediate processes. This allows the user to easily remove all intermediate processes when starting a new composition.
+
+** General
+   :PROPERTIES:
+   :CUSTOM_ID: general
+   :END:
+
+ The following commands are general purpose, spanning across the whole state:
+
+ | Command              | Result                                                                                                              |
+ |----------------------+---------------------------------------------------------------------------------------------------------------------|
+ | ~get "P"~            | Returns the process named "P", whether it is atomic, intermediate or stored.                                        |
+ | ~reset()~            | Resets intermediates and their [[#step][step counter]] in order to start a new composition.                                    |
+ | ~full_reset()~       | Resets the entire state in order to start a fresh session from scratch.                                             |
+ | ~load "P"~           | Assuming a process named "P" is stored, the intermediate processes resulting from its composition steps are loaded. |
+ | ~store "_Step4" "P"~ | Assuming an intermediate process named "_Step4" exists, it is stored as a new process named "P".                     |
+ | ~responses()~         | Yields the history of all responses given by the reasoner in the current sessiom.                                   |
+
+ {{< tip warning >}}
+ Commands that delete processes, such as ~reset()~ and ~full_reset()~ cannot be undone!
+ {{< /tip >}}
+
+**** Notes:
+     - The ~load~ command performs a ~reset()~ first.
+
+** Processes
+
+The list of atomic and stored processes can be managed with the following commands:
+
+| Command              | Result                                        |
+|----------------------+-----------------------------------------------|
+| ~add_process p~      | Adds a new process to the list.               |
+| ~get_process "P"~    | Retrieves the process named "P" if it exists. |
+| ~exists_process "P"~ | Returns ~true~ if a process named "P" exists. |
+| ~del_process "P"~    | Deletes the process named "P" from the list.  |
+| ~reset_processes()~  | Resets the list by removing all processes.    |
+| ~list()~             | Returns a list of the names of all processes. |
+
+**** Notes:
+- It is easier to use [[#create][~create~]] rather than ~add_process~ so that the process specification is built automatically for you.
+- The commands ~del_process~ and ~reset_processes~ should be avoided or, at least, used carefully. There is a risk of reaching an inconsistent state where the components of a composition have been deleted.
+
+** Intermediates
+
+The list of intermediate compositions can be managed with the following commands:
+
+| Command                   | Result                                        |
+|---------------------------+-----------------------------------------------|
+| ~add_intermediate p~      | Adds a new intermediate process to the list.             |
+| ~get_intermediate "P"~    | Retrieves the intermediate process named "P" if it exists. |
+| ~exists_intermediate "P"~ | Returns ~true~ if an intermediate process named "P" exists. |
+| ~del_intermediate "P"~    | Deletes the intermediate process named "P" from the list. |
+| ~reset_intermediates()~   | Resets the list by removing all intermediate processes.   |
+| ~ilist()~                 | Returns a list of the names of all intermediate processes. |
+
+**** Notes:
+- It is easier to use the [[#commands][composition commands]] rather than ~add_intermediate~ so that the process specifications are built automatically for you and mistakes are prevented.
+- The command ~del_intermediate~ should be avoided or, at least, used carefully. There is a risk of reaching an inconsistent state where the components of a composition have been deleted.
+- The use of the [[#general][~reset~]] command is suggested instead of ~reset_intermediates~.
+
+** Step counter
+   :PROPERTIES:
+   :CUSTOM_ID: step
+   :END:
+
+Fresh names can be automatically produced for intermediate processes using the prefix ~"_Step"~ and a /step counter/.
+
+The command ~resetstep()~ can be used to reset the step counter. However, the use of the [[#general][~reset~]] command is suggested instead.
+
+* Commands
+  :PROPERTIES:
+  :CUSTOM_ID: commands
+  :EXPORT_FILE_NAME: commands
+  :EXPORT_HUGO_WEIGHT: 320
+  :END:
+** Create
+   :PROPERTIES:
+   :CUSTOM_ID: create
+   :END:
+   create
+
