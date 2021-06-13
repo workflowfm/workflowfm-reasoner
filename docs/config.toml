@@ -29,7 +29,7 @@ disableKinds = ["taxonomy", "taxonomyTerm"]
     style = "monokai"
     tabWidth = 2
   [markup.tableOfContents]
-    endLevel = 4
+    endLevel = 3
     ordered = false
     startLevel = 1
 
