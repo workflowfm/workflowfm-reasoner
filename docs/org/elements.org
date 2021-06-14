@@ -44,7 +44,7 @@ Different combinations of these operators can be used to express composite resou
 
 Typically, composite resource types involving these 2 operators represent *output* resources. In contrast, *input* resources are expressed as the /negation/ of output resources, using the operator ~NEG~. 
 
-For exmaple, this means the type ~`NEG (A ** B)`~ represents two parallel /input/ resources.
+For example, this means the type ~`NEG (A ** B)`~ represents two parallel /input/ resources.
 
 Negated duals of the \otimes and \oplus operators do exist and are as follows:
 
@@ -144,11 +144,13 @@ We explain each of the fields next.
 
 ** Input / Output
 
-Input and output resources are described as annotated terms (see [[#resources][resources]]). More specifically, each resource is a pair of terms (~(term * term)~), the first one being the resource type and the second one the associated channel. 
+Input and output resources are described as annotated terms (see [[#resources][resources]]). More specifically, each resource is a pair of terms ~(term * term)~, the first one being the resource type and the second one the associated channel. 
 
 Channel names are generated automatically, yielding some fairly verbose names such as ~oP_lB_A_x_lB_B_x_C_rB_rB_~ seen in the example above.
 
+{{< tip >}}
 Each process can have *a list of input* resources and *a single, potentially composite output* resource.
+{{< /tip >}}
 
 ** Provenance
 
@@ -468,7 +470,10 @@ Merged inputs occur during [[#with][conditional composition]], when both process
   :EXPORT_HUGO_WEIGHT: 300
   :END:
 
-Provenance
+When composing processes, it is often necessary to keep track of which component processes own the inputs and outputs (or rather the different parts of the single output) of a composite process. We call this information /provenance/.
+
+For example, provenance can provide essential metadata to be able to correctly visualize a composite process diagrammatically.
+
 ** Example
  We begin with a motivating example to explain the purpose that provenance fulfils for the visualization of resource-based composition.
 

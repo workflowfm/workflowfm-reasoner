@@ -85,7 +85,7 @@ The console maintains an internal state of the introduced processes and composit
  | ~full_reset()~       | Resets the entire state in order to start a fresh session from scratch.                                             |
  | ~load "P"~           | Assuming a process named "P" is stored, the intermediate processes resulting from its composition steps are loaded. |
  | ~store "_Step4" "P"~ | Assuming an intermediate process named "_Step4" exists, it is stored as a new process named "P".                     |
- | ~responses()~         | Yields the history of all responses given by the reasoner in the current sessiom.                                   |
+ | ~responses()~         | Yields the history of all responses given by the reasoner in the current session.                                   |
 
  {{< tip warning >}}
  Commands that delete processes, such as ~reset()~ and ~full_reset()~ cannot be undone!
