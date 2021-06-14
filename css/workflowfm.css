@@ -13,3 +13,7 @@ pre.chroma code {
 .tip_warning {
     border-color: red;
 }
+
+strong {
+    font-weight: 900;
+}
