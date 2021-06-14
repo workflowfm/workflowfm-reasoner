@@ -256,6 +256,9 @@ These reasoning processes follow the rules of linear logic in a formally verifie
 /Selector arguments/ allow users to specify a specific part of each composed process. These arguments have a different use in each action, but allow a high level of user control. 
 
 *** Parallel - ~TENSOR~
+    :PROPERTIES:
+    :CUSTOM_ID: tensor
+    :END:
     The ~TENSOR~ action composes two processes in /parallel/. This results in a composite process with all the inputs of both processes and their two outputs composed in a single parallel output.
 
     Its name corresponds to the \otimes operator (pronounced /times/ or /tensor/), which denotes [[#resources][parallel resources]].
@@ -348,6 +351,9 @@ Therefore, the composite process will have a /single/ ~A~ input. We call such an
 
 
 *** Sequential - ~JOIN~
+    :PROPERTIES:
+    :CUSTOM_ID: join
+    :END:
     The ~JOIN~ action composes two processes /sequentially/. 
 
     More specifically, given a selected sub-term of the output of the first process and a matching input of the second process, their sequential composition yields a composite process where the resource corresponding to the selected sub-term is connected from the output of the first process to the output of the second.
