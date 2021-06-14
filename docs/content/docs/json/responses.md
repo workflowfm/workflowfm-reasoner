@@ -1,7 +1,7 @@
 ---
 title: "Responses"
 author: ["Petros Papapanagiotou"]
-lastmod: 2021-06-07T15:16:57+01:00
+lastmod: 2021-06-14T23:26:21+01:00
 draft: false
 weight: 430
 ---
@@ -17,11 +17,13 @@ All responses include a `response` field of type `string` which defines the type
 
 ## Pong {#PongResponse}
 
-**Description**:
+
+#### Description: {#description}
 
 The response to the [`Ping`]({{< relref "commands#PingCommand" >}}) command.
 
-**Structure**:
+
+#### Structure: {#structure}
 
 -   `response`: `string` = `"Pong"`
 -   `ping`: `float` = contains the original timestamp received by the prover in the [`Ping`]({{< relref "commands#PingCommand" >}}) command.
@@ -29,11 +31,13 @@ The response to the [`Ping`]({{< relref "commands#PingCommand" >}}) command.
 
 ## Create {#create}
 
-**Description**:
+
+#### Description: {#description}
 
 The response to the [`create`]({{< relref "commands#CreateCommand" >}}) command with a definition of a new atomic process.
 
-**Structure**:
+
+#### Structure: {#structure}
 
 -   `response`: `string` = `"CreateProcess"`
 -   `process`: [`process`]({{< relref "types#process" >}}) = the newly created process
@@ -41,11 +45,13 @@ The response to the [`create`]({{< relref "commands#CreateCommand" >}}) command 
 
 ## Compose {#ComposeResponse}
 
-**Description**:
+
+#### Description: {#description}
 
 The result of a single binary composition action. The [`compose`]({{< relref "commands#ComposeCommand" >}}) command may produce multiple of these, one for each action.
 
-**Structure**:
+
+#### Structure: {#structure}
 
 -   `response`: `string` = `"Compose"`
 -   `action`: [`action`]({{< relref "types#action" >}}) = the composition action that was applied
@@ -55,11 +61,13 @@ The result of a single binary composition action. The [`compose`]({{< relref "co
 
 ## Verify {#VerifyResponse}
 
-**Description**:
+
+#### Description: {#description}
 
 The response of the [`verify`]({{< relref "commands#VerifyCommand" >}}) command with a reconstructed composite process.
 
-**Structure**:
+
+#### Structure: {#structure}
 
 -   `response`: `string` = `"Verify"`
 -   `process`: [`process`]({{< relref "types#process" >}}) = the reconstructed composition
@@ -67,11 +75,13 @@ The response of the [`verify`]({{< relref "commands#VerifyCommand" >}}) command 
 
 ## Deploy {##DeployResponse}
 
-**Description**:
+
+#### Description: {#description}
 
 This is the response to the [`deploy`]({{< relref "commands#DeployCommand" >}}) commands. It describes the files that are required for deployment.
 
-**Structure**:
+
+#### Structure: {#structure}
 
 First we need the structure for a single deployment file. This is a `file` object containing the following fields:
 
@@ -88,11 +98,13 @@ Based on this, the `deploy` response is as follows:
 
 ## Failed {#failed}
 
-**Description**:
+
+#### Description: {#description}
 
 This response is generated whenever the prover fails to perform a command. Unless there is a bug or associated limitation in the prover, this indicates a user or input error.
 
-**Structure**:
+
+#### Structure: {#structure}
 
 -   `response`: `string` = `"CommandFailed"`
 -   `content`: `string` = a (sometimes useful) description of the error that occured
@@ -100,11 +112,13 @@ This response is generated whenever the prover fails to perform a command. Unles
 
 ## Exception {#exception}
 
-**Description**:
+
+#### Description: {#description}
 
 This response is generated whenever the prover fails due to an internal exception. This indicates an expected failure in the system.
 
-**Structure**:
+
+#### Structure: {#structure}
 
 -   `response`: `string` = `"Exception"`
 -   `content`: `string` = the contents of the thrown exception

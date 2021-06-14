@@ -1,0 +1,665 @@
+#+TITLE: Elements
+#+AUTHOR: Petros Papapanagiotou
+#+EMAIL: petros@workflowfm.com
+#+OPTIONS: toc:nil email:t 
+#+EXCLUDE_TAGS: noexport
+#+PROPERTY: header-args :results output drawer :session workflowfm :exports both :eval no-export :dir ../../
+#+HUGO_AUTO_SET_LASTMOD: t
+
+#+HUGO_BASE_DIR: ../
+#+HUGO_SECTION: docs/elements
+
+* Elements
+  :PROPERTIES:
+  :EXPORT_FILE_NAME: _index
+  :EXPORT_HUGO_WEIGHT: 200
+  :END:
+
+This section covers some basic elements, concepts, and terminology used in the WorkflowFM Reasoner. This includes logical terms, process specifications, composition actions, and much more.
+
+* Resources
+  :PROPERTIES:
+  :CUSTOM_ID: resources
+  :EXPORT_FILE_NAME: resources
+  :EXPORT_HUGO_WEIGHT: 210
+  :END:
+
+Processes are specified based on their input and output resources. Each resource is specified by its type and a \pi-calculus channel that receives or sends it. 
+
+** Resource types
+Resource types are specified by a proposition in linear logic. [[https://github.com/workflowfm/workflowfm-reasoner/blob/master/src/CLL/CLL.ml][In HOL Light]] these are propositions of type ~`:LinProp`~.
+
+{{< tip >}}
+Resource type names need to follow the same naming restrictions as HOL Light variables, i.e. they need to start with a letter and contain only letters and numbers.
+{{< /tip >}}
+
+Resource types can be composed using the following logical connectives:
+| Connective | HOL Light Syntax | Interpretation                                      |
+|    <c>     |       <c>        | <l>                                                 |
+|------------+------------------+-----------------------------------------------------|
+|   A \otimes B    |      A ** B      | Two resources A and B in parallel.                  |
+|   A \oplus B    |      A ++ B      | Optional resource of either type A or B (not both). |
+
+Different combinations of these operators can be used to express composite resource types of arbitrary complexity.
+
+Typically, composite resource types involving these 2 operators represent *output* resources. In contrast, *input* resources are expressed as the /negation/ of output resources, using the operator ~NEG~. 
+
+For example, this means the type ~`NEG (A ** B)`~ represents two parallel /input/ resources.
+
+Negated duals of the \otimes and \oplus operators do exist and are as follows:
+
+| Connective |    Dual     | HOL Light Syntax |
+|    <c>     |     <c>     |       <c>        |
+|------------+-------------+------------------|
+|   A \otimes B    | A &#8523; B |      A % B       |
+|   A \oplus B    |    A & B    |      A & B       |
+
+For example, this makes the followning expressions equivalent:
+~NEG (A ** B) = NEG A % NEG B~
+
+However, the reasoner is developed to work with /polarized/ types, i.e. resource types that only use the \otimes and \oplus connectives and the negations of such types. 
+
+{{< tip warning >}}
+Mixing up input and output connectives and arbitrary negations may lead to unpredictable results.
+{{< /tip >}}
+
+This means that, for process specification and composition, you are expected to use atomic resource types or composite ones with the \otimes and \oplus operators. If you need to explicitly state that a resource type is an /input/, then negate the whole term using ~NEG()~.
+
+The reasoner often allows you to not even use ~NEG~ when a resource type is unambiguously expected to be an input.
+
+{{< tip >}}
+All binary operators are right-associative. For example: ~A ** B ** C = A ** (B ** C)~.
+{{< /tip >}}
+
+
+** Channels
+
+Each resource type in a process specification is either received (input) or sent (output) through a \pi-calculus channel. Generally, the reasoner aims to minimize the user's interaction with \pi-calculus components. In the case of channels, the reasoner will automatically generate appropriate channel names for each resource. We present the channel syntax here for reference when it appears in various results.
+
+{{< tip >}}
+We say that a resource type or proposition is /annotated/ with a \pi-calculus channel to form a /term/. 
+{{< /tip >}}
+
+At a high level, annotations simply appear as pairs of resource types and channels.
+
+At the logic level, the corresponding type of a /term/ in HOL Light is ~`:(num)LinTerm`~.
+
+Note the use of numbers (~num~) in that type. This represents the type of channels, which in principle could be any desired HOL Light type. Numbers make many reasoning tasks easier, though for the most part in practice we work with named variables for channels.
+
+Resource annotation is accomplished [[https://github.com/workflowfm/workflowfm-reasoner/blob/master/src/CLL/CLL.ml][in the logic]] with the HOL Light operator ~<>~. 
+
+For example, the term ~`(A ** B) <> c`~ represents a channel ~c~ carrying an /output/ resource of type ~A ** B~ or, more specifically, /two/ output resources of type s ~A~ and ~B~ respectively in parallel.
+* Processes
+  :PROPERTIES:
+  :EXPORT_FILE_NAME: processes
+  :EXPORT_HUGO_WEIGHT: 220
+  :END:
+
+Processes are defined based on their input and outputs [[#resources][resources]], as well as some additional metadata.
+
+The [[https://github.com/workflowfm/workflowfm-reasoner/blob/master/src/processes/processes.ml][full process data structure]] is the following:
+
+#+BEGIN_SRC ocaml :eval no
+module type Process_type =
+sig
+  type t = {
+    name : string;
+    inputs : (term * term) list;
+    output : term * term;
+    prov : provtree;
+    proc : term; 
+    actions : Action.t list;
+    copier : bool;
+    intermediate : bool;
+  }
+(* ... *)
+end;;
+#+END_SRC
+
+Each process is assumed to have a unique name. Attempting to construct a composite process with the same name as one of its components will result in a failure.
+
+{{< tip >}}
+Resource type names need to follow the same naming restrictions as HOL Light variables, i.e. they need to start with a letter and contain only letters and numbers.
+{{< /tip >}}
+
+Here is an example atomic process ~P~ with 2 inputs, ~X ++ Y~ and ~Z~, and an output of type ~A ** B ** C~ (or 3 parallel outputs of types ~A~, ~B~, and ~C~):
+#+BEGIN_SRC ocaml :eval no
+  {name = "P";
+   inputs = [(`X ++ Y`, `cP_lB_X_Plus_Y_rB_1`); (`Z`, `cP_Z_2`)];
+   output = (`A ** B ** C`, `oP_lB_A_x_lB_B_x_C_rB_rB_`);
+   prov =
+    Provnode ("times", Provleaf "P",
+     Provnode ("times", Provleaf "P", Provleaf "P"));
+   proc =
+    `P (cP_lB_X_Plus_Y_rB_1,cP_Z_2,oP_lB_A_x_lB_B_x_C_rB_rB_) =
+     Comp
+     (Res [cP_lB_X_Plus_Y_rB_1__opt_X; cP_lB_X_Plus_Y_rB_1__opt_Y]
+     (Out cP_lB_X_Plus_Y_rB_1
+    (* ... *)
+     ))`;
+   actions = []; copier = false; intermediate = false}
+#+END_SRC
+
+We explain each of the fields next.
+
+** Input / Output
+
+Input and output resources are described as annotated terms (see [[#resources][resources]]). More specifically, each resource is a pair of terms ~(term * term)~, the first one being the resource type and the second one the associated channel. 
+
+Channel names are generated automatically, yielding some fairly verbose names such as ~oP_lB_A_x_lB_B_x_C_rB_rB_~ seen in the example above.
+
+{{< tip >}}
+Each process can have *a list of input* resources and *a single, potentially composite output* resource.
+{{< /tip >}}
+
+** Provenance
+
+The ~prov~ field captures the /output provenance/ for the process. See [[#provenance][Provenance]] for more details.
+
+** \pi-calculus
+
+The ~proc~ field captures the \pi-calculus process definition. This describes the process in an executable term of asynchronous communication through the available channels.
+
+It involves a process definition as a function over the free channels, i.e. the channels involved in the inputs and outputs.
+
+For atomic processes, the body of the definition is constructed automatically based on the input and output specification. It essentially provides a typechecked term for parallel reception of all the inputs and sending of the output. 
+
+For composite processes, the body of the definition is constructed via proof, with all the associated guarantees of correctness.
+
+** Actions
+
+Composite processes include a list of [[#actions][composition actions]] that were used to construct them. 
+
+This allows us to reconstruct or revalidate these composite processes at any point, for instance after updating the specification of one of their components. It also allows us to reload all the intermediate steps of the composition to be able to construct different variations without going through all of the same steps.
+
+Atomic processes have an empty list of actions.
+
+** Copy Nodes
+:PROPERTIES:
+:CUSTOM_ID: copynodes
+:END:
+Copier processes or /Copy Nodes/ are processes that represent the ability of a particular resource, such as an electronic document, to be copied. 
+
+We do not include exponentials in our linear logic formalisation, so this mechanism enables us to copy resources in an explicit way. If it is not actually possible to copy a resource (e.g. a physical resource or currency), then it will not be possible to provide a concrete implementation of the specification of the copier process.
+
+More specifically, Copy Nodes are processes that receive a single input (e.g. ~A~) and provide several copies of the same resource (e.g. ~A ** A ** A~). 
+
+The ~copier~ field automatically identifies processes with a Copy Node specification. 
+
+This may also catch processes with a Copy Node specification but a different intended purpose (e.g. a process that splits a document in half and yields two different documents). At the logical level it is not possible to disambiguate between the two.
+
+Nonetheless, Copy Nodes are not treated any differently than normal processes by the reasoner. This field is only a flag to facilitate the identification of processes with this type of specification. For instance, this is useful in our diagrammatic composer tool, where Copy Nodes are depicted with a special round symbol.
+
+** Intermediate Processes
+:PROPERTIES:
+:CUSTOM_ID: intermediate
+:END:
+Composite processes are differentiated into /intermediate/ and /stored/ processes.
+
+Every time a composition action is performed between 2 processes, an /intermediate/ composite process is produced. Subsequent composition steps will produce further intermediate processes. Once a composition is completed, we /store/ the final process among the other atomic processes and completed compositions. The intermediate processes can then be deleted, to keep the list of available processes short.
+
+As the size of the composed workflows increases, a large number of intermediate processes may be produced. Separating intermediate from stored processes enables better housekeeping and a smoother user interaction. Besides, the user has the option to store every single intermediate process produced if they so choose.
+
+Other than managing the processes at the user level, the reasoner does not treat intermediate processes any differently than atomic or stored processes.
+
+* Composition
+  :PROPERTIES:
+  :EXPORT_FILE_NAME: composition
+  :EXPORT_HUGO_WEIGHT: 230
+  :END:
+
+Composition is achieved through binary /actions/ that compose 2 processes together. Although there is some high level user control over the actions, the composition is automated and strictly follows the rules of linear logic. 
+
+The result is an [[#intermediate][intermediate composite process]] specified by its input and output resources and a [[../../][correct-by-construction]], executable \pi-calculus definition. These processes can then be further composed using subsequent actions. 
+
+Performing an action involved the production and maintenance of a temporary internal state called an /[[#actionstate][actionstate]]/. This provides additional metadata about how a composition was achieved.
+
+** Actions
+:PROPERTIES:
+:CUSTOM_ID: actions
+:END:
+
+Binary composition actions have the following [[https://github.com/workflowfm/workflowfm-reasoner/blob/master/src/processes/actions.ml][structure]]:
+#+BEGIN_SRC ocaml :eval no
+module Action = struct
+
+  type t = {
+    act : string;
+    larg : string;
+    lsel : string;
+    rarg : string;
+    rsel : string;
+    res : string ;
+  }
+
+(*...*)
+end;;
+#+END_SRC
+
+The fields can be described briefly as follows:
+| Field  | Description                                                           |
+|--------+-----------------------------------------------------------------------|
+| ~act~  | The name of the composition action to be performed.                   |
+| ~larg~ | The name of the /first/ process (or left-hand-side) to be composed.   |
+| ~lsel~ | A selector argument for the /first/ process.                          |
+| ~rarg~ | The name of the /second/ process (or right-hand-side) to be composed. |
+| ~rsel~ | A selector argument for the /second/ process.                         |
+| ~res~  | The desired name for the resulting composite process.                 |
+
+By default there are 3 available composition actions:
+1. ~TENSOR~: Parallel composition.
+2. ~WITH~: Conditional composition.
+3. ~JOIN~: Sequential composition.
+
+These are described in more detail below.
+
+Each action is associated with an implemented reasoning process (or /tactic/) in HOL Light. There is an internal associative map between tactic names and their actual implementation.
+
+These reasoning processes follow the rules of linear logic in a formally verified way, with the associated guarantees of correctness we have discussed. This may sometimes lead to results in terms of input and output types for the composite process that may be more complex than expected. Though such results may seem unintuitive at first, their correctness is mathematically guaranteed, with an enforced systematic accounting of all resources (linearity). Small examples of this appear in our description of the actions below.
+
+/Selector arguments/ allow users to specify a specific part of each composed process. These arguments have a different use in each action, but allow a high level of user control. 
+
+*** Parallel - ~TENSOR~
+    :PROPERTIES:
+    :CUSTOM_ID: tensor
+    :END:
+    The ~TENSOR~ action composes two processes in /parallel/. This results in a composite process with all the inputs of both processes and their two outputs composed in a single parallel output.
+
+    Its name corresponds to the \otimes operator (pronounced /times/ or /tensor/), which denotes [[#resources][parallel resources]].
+
+**** Selector arguments
+    /Selector arguments/ are unused in the ~TENSOR~ action.
+
+**** Example
+    As an example, the result ~R~ of the parallel composition of a process ~P~ with input ~X~ and output ~A ++ B~ and a process ~Q~ with inputs ~Y~ and ~Z~ and output ~C~ is the following process:
+
+    #+BEGIN_SRC ocaml :eval no
+      {name = "R";
+        inputs = [(`X`, `cP_X_1`); (`Y`, `cQ_Y_1`); (`Z`, `cQ_Z_2`)];
+        output = (`(A ++ B) ** C`, `c_Step0___Step0__z1`);
+        prov =
+          Provnode ("times", Provnode ("plus", Provleaf "P", Provleaf "P"),
+                    Provleaf "Q");
+        proc =
+          `R (cP_X_1,cQ_Y_1,cQ_Z_2,c_R___R__z1) =
+            PiTimesProc (A ++ B) C c_R___R__z1 oP_lB_A_Plus_B_rB_ oQ_C_
+              (P (cP_X_1,oP_lB_A_Plus_B_rB_))
+              (Q (cQ_Y_1,cQ_Z_2,oQ_C_))`;
+        actions =
+            [{Action.act = "TENSOR"; larg = "P"; lsel = ""; rarg = "Q"; rsel = "";
+              res = "R"}];
+        copier = false; 
+        intermediate = true}
+      #+END_SRC
+
+      The action used can be noticed in the ~actions~ field above and is as follows:
+      #+BEGIN_SRC ocaml :eval no
+        {Action.act = "TENSOR"; larg = "P"; lsel = ""; rarg = "Q"; rsel = ""; res = "R"}
+      #+END_SRC
+
+*** Conditional - ~WITH~
+    :PROPERTIES:
+    :CUSTOM_ID: with
+    :END:
+    The ~WITH~ action composes two processes /conditionally/. 
+
+    More specifically, given an input ~X~ of a process ~P~ and a ~Y~ input of a process ~Q~, their conditional composition yields a process with an optional input ~X ++ Y~, i.e. one that can accept ~X~ /or/ ~Y~ (but not both). If the composite process receives ~X~ then ~P~ will be executed. Otherwise if the composite process receives ~Y~ then ~Q~ will be executed.
+    
+    Its name corresponds to the & operator (pronounced /with/), which denotes [[#resources][optional /input/ resources]].
+
+**** Selector arguments
+    /Selector arguments/ are used in the ~WITH~ action to specify which inputs should be used in the composite conditional input. The user needs to provide the /resource type/ of the input to be used from each process.
+
+    {{< tip warning >}}
+    There is no differentiation between distinct inputs with the same resource type. If multiple inputs with the same type exist in the same component process, this may result to the wrong one being used to form the condition. There is currently no way to affect this outcome.
+    {{< /tip >}}
+
+**** Example
+    As an example, the result ~R~ of the conditional composition of a process ~P~ with input ~X~ and output ~A ++ B~ and a process ~Q~ with inputs ~Y~ and ~Z~ and output ~C~ with inputs ~X~ and ~Y~ selected is the following process:
+    #+BEGIN_SRC ocaml :eval no
+      {name = "R";
+        inputs = [(`Z`, `cQ_Z_2`); (`X ++ Y`, `c_R___R__x3`)];
+        output = (`((A ++ B) ** Z) ++ C`, `c_R___R__y3`);
+        prov =
+         Provnode ("plus",
+          Provnode ("times",
+           Provnode ("plus", Provleaf "&_R", Provleaf "&_R"),
+           Provleaf "&_R"),
+          Provleaf "&_R");
+        proc = (*...*);
+        actions =
+         [{Action.act = "WITH"; larg = "P"; lsel = "X"; rarg = "Q"; rsel = "Y";
+           res = "R"}];
+        copier = false; 
+        intermediate = true}
+    #+END_SRC
+    
+    The action used can be noticed in the ~actions~ field above and is as follows:
+    #+BEGIN_SRC ocaml :eval no
+      {Action.act = "WITH"; larg = "P"; lsel = "X"; rarg = "Q"; rsel = "Y"; res = "R"}
+    #+END_SRC
+
+    It is worth noting the output type of the composite process, namely ~((A ++ B) ** Z) ++ C~. This is an /optional/ output consisting of the outputs ~A ++ B~ and ~C~ of the two components, each of which may be produced depending on which process is executed at runtime. 
+
+    Note, however, that the output ~A ++ B~ is paired with a new output ~Z~. This corresponds to the second input ~Z~ of ~Q~. This needs to still be an input in the composite process ~R~ because without it ~Q~ would not be able to execute. However, if ~P~ is executed then the input ~Z~ will not be used.
+
+    The rules of linear logic guarantee that unused resources are accounted for and do not just disappear. This leads to ~Z~ appearing as an output parallel to the output of ~P~.
+
+**** Merged inputs
+
+     A notable case is one where the two conditionally composed processes have common inputs. In that case, the common inputs merge into inputs of the composite process.
+
+     For example, both composed processes may have an input of type ~A~ each. This means both processes require a resource of type ~A~ in order to execute. No matter which of the 2 processes ends up executing in the conditional execution at runtime, the composite process will require an input of type ~A~. 
+
+Therefore, the composite process will have a /single/ ~A~ input. We call such an input a /merged/ input. These are reported explicitly in the /[[#actionstate][actionstate]]/.
+
+
+*** Sequential - ~JOIN~
+    :PROPERTIES:
+    :CUSTOM_ID: join
+    :END:
+    The ~JOIN~ action composes two processes /sequentially/. 
+
+    More specifically, given a selected sub-term of the output of the first process and a matching input of the second process, their sequential composition yields a composite process where the resource corresponding to the selected sub-term is connected from the output of the first process to the output of the second.
+
+    {{< tip >}}
+    A /matching/ input is not necessarily one that matches exactly, but rather one that /can accept/ the selected output sub-term. For instance, an input of type ~A ++ B~ /can accept/ an output of type ~A~.
+    {{< /tip >}}
+
+**** Selector arguments
+     The *first/left* selector argument is used in the ~JOIN~ action to select the output sub-term of the first/left process. 
+
+     This is specified as a /path in the syntax tree/ of the process's output. It should follow the syntax of [[https://www.cl.cam.ac.uk/~jrh13/hol-light/HTML/find_path.html][HOL Light's ~find_path~ function]]. 
+
+     In short, the string ~lr~ means we should take the left path in the syntax tree, whereas the string ~r~ means we should take the right. An empty string indicates we should consider the type of the whole output.
+
+     For example, given an output ~A ** (B ++ C)~ we can select any sub-term as follows:
+| Sub-term        | Selector string |
+|-----------------+-----------------|
+| ~A~             | lr              |
+| ~B~             | rlr             |
+| ~C~             | rr              |
+| ~B ++ C~        | r               |
+| ~A ** (B ++ C)~ | (empty)         |
+
+The *second/right* selector argument is used to select the input type of the second/right process that is expected to match our selected sub-term. This can help disambiguate between 2 inputs that are both able to receive the selected output type.
+
+**** Example
+    As an example, the result ~R~ of the sequential composition of a process ~P~ with input ~X~ and output ~A ++ B~ and a process ~Q~ with inputs ~A~ and ~Y~ and output ~C~ is the following process:
+    #+BEGIN_SRC ocaml :eval no
+      {name = "R";
+       inputs = [(`X`, `cP_X_1`); (`Y`, `cQ_Y_2`)];
+       output = (`C ++ (Y ** B)`, `c_R___R__y3`);
+       prov =
+         Provnode ("plus", Provleaf "Q",
+                   Provnode ("times", Provleaf "Q:cQ_Y_2", Provleaf "P"));
+       proc = (* ... *);
+       actions =
+         [{Action.act = "JOIN"; larg = "P"; lsel = "lr"; rarg = "Q"; rsel = "A"; res = "R"}];
+       copier = false; 
+       intermediate = true}
+     #+END_SRC
+
+    The action used can be noticed in the ~actions~ field above and is as follows:
+    #+BEGIN_SRC ocaml :eval no
+      {Action.act = "JOIN"; larg = "P"; lsel = "lr"; rarg = "Q"; rsel = "A"; res = "R"}
+    #+END_SRC
+
+**** Notes
+     There are many different possible cases of interesting sequential compositions and edge cases. Depending on their types there may also be multiple ways that two specific processes can be composed together sequentially. 
+
+     In our experience, it is not easy or practical for the user to control the sequential composition in such a fine grained way. Instead, the reasoner uses a set of heuristics to make its own decisions based on 2 key goals:
+     1. *Connect the 2 processes maximally*: The reasoner attempts to connect as many of the inputs resources of the receiving process as possible.
+     2. *Minimize the execution steps in the final composition*: The reasoner aims to make as few reasoning steps as possible, minimize the number of resources that are /buffered/ (i.e. forwarded explicitly from one process to the next), and reduce repeating resources.
+
+The first goal means that if the left process has output ~A ** B ** C~ and the right process has inputs ~B~ and ~C~, then both of the two inputs will be connected to their respective parallel outputs irrespective of the user selection.
+
+The second goal affects multiple decisions in the sequential composition. 
+
+One example is when the optional output of the left process is converted to an optional output with identical options, such as ~Y ++ Y~. This might occur for example when a process that may fail to produce resource ~Y~ and throw an exception is composed with a contingency process that can recover from the exception and produce ~Y~ after all. The reasoner will attempt to collapse that output to a single ~Y~ output, whether that is the result of the original or of the contingency process. In fact, this will also reduce the reasoning steps and the size of the generated executable term, making it more efficient. It may also reduce the branching in subsequent compositions further down the line. 
+
+The tradeoff is that it is no longer possible to determine whether ~Y~ was produced from the original component or from the contingency process, which may be useful in some cases. The reasoner makes this decision under the assumption that if such differentiation is to be made between the produced ~Y~ resources, it should be reflected in the their respective types, instead of them having the same type ~Y~.
+
+** Actionstate
+:PROPERTIES:
+:CUSTOM_ID: actionstate
+:END:
+
+Each composition action corresponds to a reasoning tactic implemented in HOL Light. These tactics require an extended proof state to function appropriately. This extension is captured using the ~Actionstate~ structure.
+
+{{< tip >}}
+The user is not required to manipulate the actionstate themselves, unless they perform low level proofs. However, the actionstate does appear as a result of a composition action and carries additional metadata.
+{{< /tip >}}
+
+The final actionstate resulting from a composition proof is provided within the reasoner's response, so it may be useful to explain its structure briefly here.
+
+The ~Actionstate~ structure is [[https://github.com/workflowfm/workflowfm-reasoner/blob/master/src/processes/actions.ml][defined as follows]]:
+
+#+BEGIN_SRC ocaml :eval no
+module Actionstate = struct
+  type t = {
+      label : string;
+      ctr : int;
+      metas : term list;
+      merged : (term * string * string) list;
+      iprov : (term * provtree) list;
+      prov : (string * provtree) list;
+    }
+
+(* ... *)
+end;;
+#+END_SRC
+
+The fields can be described briefly as follows:
+| Field              | Description                                                                           |
+|--------------------+---------------------------------------------------------------------------------------|
+| ~label~            | A unique name for the given composition, typically the name of the resulting process. |
+| ~ctr~              | A unique counter for each reasoning step during composition.                          |
+| ~metas~            | A list of metavariables used during composition.                                      |
+| ~merged~           | A list of merged inputs during a conditional composition.                             |
+| ~iprov & prov~     | [[#provenance][Provenance tracking]] for inputs and outputs respectively.                             |
+
+The unique name and counter are used to guarantee uniqueness of introduced channel names.
+
+Merged inputs occur during [[#with][conditional composition]], when both processes have the same input type, so that the final composition does not duplicate inputs. Each entry consists of the input term as it appears in the composition paired with the names of the 2 input channels that got merged.
+
+* Provenance
+  :PROPERTIES:
+  :CUSTOM_ID: provenance
+  :EXPORT_FILE_NAME: provenance
+  :EXPORT_HUGO_WEIGHT: 300
+  :END:
+
+When composing processes, it is often necessary to keep track of which component processes own the inputs and outputs (or rather the different parts of the single output) of a composite process. We call this information /provenance/.
+
+For example, provenance can provide essential metadata to be able to correctly visualize a composite process diagrammatically.
+
+** Example
+ We begin with a motivating example to explain the purpose that provenance fulfils for the visualization of resource-based composition.
+
+*** Specification
+
+ Assume the following process specifications:
+ - ~P1~: ~⊢ NEG X, A ⊗ B~
+ - ~P2~: ~⊢ NEG B, C ⊕ D~
+ - ~Q1~: ~⊢ NEG A, E~
+ - ~Q2~: ~⊢ NEG E, NEG (C ⊕ D), Y~
+
+ We then perform ~JOIN~ operations for each pair, obtaining the following intermediate compositions:
+ + ~P~: ~⊢ NEG X, A ⊗ (C ⊕ D)~
+ + ~Q~: ~⊢ NEG A, NEG (C ⊕ D), Y~
+
+ Finally, we ~JOIN~ the 2 results to obtain the final composition:
+ - ~R~: ~⊢ NEG X, Y~
+
+*** Visualization
+
+ At the logical level, the composition above seems straightforward. The visualization, however, needs to reveal more information. We need to accurately depict how the individual components are connected to each other, and how resources flow between them.
+
+ The image below shows the following processes in this order: ~P1~, ~P2~, ~P~, ~Q~, and ~R~.
+
+ {{< picture "provenance/ProvenanceExample.png" "provenance/ProvenanceExample.png" "Orange diagrams depicting the described processes P1, P2, P, Q, and R" >}}
+
+ In the visualization of ~R~, the system has inferred that resource ~A~ connects ~P1~ to ~Q1~, whereas ~P2~ and ~Q2~ are connected by ~C ⊕ D~. This is achieved despite the fact that the last composition action joined intermediate processes ~P~ and ~Q~, meaning the whole term ~A ⊗ (C ⊕ D)~ was "cut" in one go.
+
+ This is accomplished by tracking the *input* and *output* provenance of the involved processes. Specifically, when composing ~P~, we track its output provenance for the output ~A ⊗ (C ⊕ D)~ is one where ~A~ came from ~P1~ and ~(C ⊕ D)~ came from ~P2~. Similarly, when composing ~Q~, we track the input provenance, i.e. that ~NEG A~ belongs to ~Q1~ and ~NEG (C ⊕ D)~ belongs to ~Q2~. This way, when ~P~ and ~Q~ are joined, we know exactly where each connected resource is coming from and going to.
+
+** Provenance Trees
+
+ We want to be able to track provenance of specific CLL resources. This means subterms of the same term can have different provenance. For this reason, we track provenance using a binary tree structure that matches the syntax tree of the term. The leaves of the tree contain provenance values instead of CLL propositions.
+
+ Here is the syntax and provenance trees for the output of ~P~ from the example:
+ #+BEGIN_EXAMPLE
+ ⊗         ⊗
+ |\        |\
+ | \       | \
+ A  ⊕      P1 ⊕
+    |\        |\
+    | \       | \
+    C  D      P2 P2
+ #+END_EXAMPLE
+
+ If all the propositions in a (sub)tree have the same provenance, we can collapse the provenance (sub)tree to a single node:
+
+ #+BEGIN_EXAMPLE
+ ⊗         ⊗
+ |\        |\
+ | \       | \
+ A  ⊕      P1 P2
+    |\        
+    | \      
+    C  D   
+ #+END_EXAMPLE
+
+[[https://github.com/workflowfm/workflowfm-reasoner/blob/master/src/processes/provenance.ml][In the reasoner]], provenance trees are defined with a custom data type as follows:
+
+#+BEGIN_SRC ocaml :eval no
+type provtree =
+  Provnode of string * provtree * provtree
+  | Provleaf of string;;
+#+END_SRC
+
+Nodes of \otimes are labelled ~"times"~, while \oplus nodes are labelled ~"plus"~.
+
+Based on this, the above example provenance tree would be represented as ~Provnode ("times", Provleaf "P1", Provleaf "P2")~.
+
+** Output Provenance
+
+ Each process may only have a single, possibly composite output. When composing processes, the output of the composition often consists of parts of the outputs of its components.
+
+ In our example above, ~P~ has output ~A ⊗ (C ⊕ D)~ consisting of ~A~ coming from ~P1~ and ~C ⊕ D~ coming from ~P2~. This is exactly what the provenance tree represents.
+
+ The output provenance tree of each process is stored in its structure and used during composition. It is also copied as an output provenance entry, which maps each process name to its output provenance, in the composition state. This allows the composition tactics to gain access to that information.
+
+ Apart from names of component atomic (or collapsed composite) processes who own part of the output, the leaves of an output provenance tree may have special values as described next.
+
+*** The ~&~ prefix
+    :PROPERTIES:
+    :CUSTOM_ID: OutputMerge
+    :END:
+
+ Provenance leaves starting with a ~&~ prefix indicate a "merge node" as the source of the output.
+
+ When using ~WITH~ and in some cases of optional outputs in ~JOIN~ we need to introduce a "merge node" to indicate that 2 (or more) outputs are merged into a single (usually optional) output. This is one way of showing how the options come together, without showing disconnected outputs from different processes. 
+
+ Outputs coming out of such a merge node can no longer be linked back to the components they came from without breaking the correlation between the options. 
+
+ In other cases, two equivalent options are merged into a single output as an "optimization" step to avoid redundant case splits. A merge node is also used here, and the merged output has an unclear (double?) provenance.
+
+ Perhaps the simplest example is shown below:
+
+ {{< picture "provenance/SimplestMerge.png" "provenance/SimplestMerge.png" "Light blue diagram depicting an example of a simple merge of a process P with input X and optional output A or E and a process Q with input E and output A. The composite workflow shows P and Q connected with an edge labelled E and their outputs connected to a rhombus with the & symbol and a single output A." >}}
+
+ In this, the second option ~E~ of ~P~ is converted to the type of the first option ~A~ through ~Q~. This fits the intuition of a recovery process that recovers from an exception ~E~ to produce an expected ~A~. The result of the composition is a single ~A~ output, whether it came from ~P~ in the first place or from ~Q~ after "recovery". 
+
+ If ~A~ gets connected to another process, whether the source will be ~P~ or ~Q~ is only determined at runtime. We therefore use the ~&~ merge node and label the output provenance to represent that the ~A~ output will be coming from this particular merge node.
+
+ In such cases we mark the provenance of the new output using ~&~ followed by the name of the composition that introduced the merge node.
+
+*** Unused inputs and the ~:~ tag
+
+ When dealing with optional outputs, the ~JOIN~ action often needs to build buffers for unused inputs. See the standard example below:
+
+ {{< picture "provenance/StandardOptionalJoin.png" "provenance/StandardOptionalJoin.png" "Light blue diagram depicting a process P with an optional output A or E. E is connected to a process Q, which also has another input B and an output Y. A and Y are connected to a triangle with an optional output, one with edges A and B and one consisting of Y." >}}
+
+
+ What should the output provenance for ~B~ be? Here it clearly should be ~Q~. However, ~Q~ may not be atomic, but an intermediate composition instead. The reasoner does not know whether ~Q~ is composed of multiple components and which component ~B~ is coming from.
+
+ Mirroring the image above, here are 2 examples where ~Q~ is a composite process consisting of ~Q1~ and ~Q2~ (top) and ~Q3~ and ~Q4~ (bottom):
+
+ {{< picture "provenance/UnusedInputProvenance.png" "provenance/UnusedInputProvenance.png" "Light blue diagram depicting 2 worklflows of processes P, Q1, Q2 and P, Q3, Q4 respectively. P has an input X and connects to Q1 and Q3 through an edge E. Q1 and Q3 connect to Q2 and Q4 respectively through an edge C. P and Q2 connect to a triangle through edges A and Y respectively, and similarly for Q4 in the second workflow. The output of the triangle is an option between Y and two edges A and B. In the first workflow Q2 also has an input B, whereas in the second workflow Q3 has an input B instead." >}}
+
+ In the top case, ~B~ is an input of ~Q2~, whereas in the bottom case ~B~ is an input of ~Q3~. In both cases, the reasoner just sees an intermediate composition ~Q~ with inputs ~B~ and ~E~ and output ~Y~ as in the previous image. We therefore need a different way of tagging the provenance of ~B~ in a way that allows us to trace it back to ~Q2~ or ~Q3~.
+
+ This is accomplished by reporting the channel ~c~ of the unused input ~B~. In the example above, the reasoner will produce a provenance leaf ~Q:c~, i.e. the name of the (possibly composite) process ~Q~ followed by a colon ~:~ followed by the name of the channel of the unused input ~c~.
+
+ The reasoner is effectively telling the graph interface to search in the process ~Q~ for an input with channel ~c~ and use the owner of that input as the source of ~B~.
+
+ This may cause issues when multiple identical components introduce the same channel name multiple times in the same composition. The reasoner does not currently diambiguate between those because it does not even have that information.
+
+** Input Provenance
+
+ Each process can have multiple inputs, each with its own unique channel. This means we can generally track the owner of an input through the channel. 
+
+ In our example above, ~NEG (C ⊕ D)~ of ~Q2~ will have a unique channel name, let's assume ~cQ~. When composing ~Q1~ with ~Q2~, this input is not affected. This means if we try to connect something to it, we already know ~cQ~ belongs to ~Q2~ so we can track its provenance and connect the graph appropriately.
+
+ The composition actions only affect input channels in 2 ways:
+ 1. The ~WITH~ action constructs new inputs that are options or merges of other inputs. These are reported in the composition step and their provenance is linked to the composite process, not its components.
+ 2. The ~JOIN~ action manipulates inputs in order to match the output of the other (left) component. This includes adding buffers, using inputs from different components and merging options. In this case, we need to track the provenance of each part in the constructed input.
+
+ Back to our example, when composing ~P~ with ~Q~, we connect ~NEG A~ with ~NEG (C ⊕ D)~ to create a new input ~NEG (A ⊗ (C ⊕ D))~ that matches the output of ~P~. At that point, we need to track that ~NEG A~ had some channel ~cP~ which can be traced back to ~P~, whereas ~NEG (C ⊕ D)~ had channel ~cQ~ that we know belongs to ~Q~. For this reason, we build the following provenance tree (shown next to the input parse tree), while ignoring the negation:
+ #+BEGIN_EXAMPLE
+ ⊗         ⊗
+ |\        |\
+ | \       | \
+ A  ⊕      cP ⊕
+    |\        |\
+    | \       | \
+    C  D     cQ cQ
+ #+END_EXAMPLE
+
+ Note that the leaves of an input provenance tree, in principle, contain channels as opposed to those of an output provenance tree which contain process names. 
+
+ There are a few particularities and special cases of leaves for input provenance, which we describe next.
+
+*** Disambiguating same channels with a ~:~ tag
+
+ Assume a process ~Q~ with an input ~A ⊕ B~ on channel ~cQ~. In the image shown below, we ~TENSOR~ ~Q~ with itself and then ~JOIN~ it with a process ~P~ with output ~(A ⊕ B) ⊗ (A ⊕ B)~:
+
+ {{< picture "provenance/SameChannelJoin.png" "provenance/SameChannelJoin.png" "Light blue diagram depicting a process P with input I connected to two processes both named Q, each through 2 dashed edges A and B. The 2 Q processes each have a X output which are connected to a triangle. The output of the triangle is 2 X edges." >}}
+
+ As we are joining ~P~ to the the 2 ~Q~ processes, the reasoner will apply the par rule to compose the 2 ~A ⊗ B~ inputs into one that matches the output of ~P~. Sticking to the explanation of input provenance we provided above, the input provenance for the composite input will be ~(cQ ⊕ cQ) ⊗ (cQ ⊕ cQ)~. 
+
+ This would lead the graph engine to look for 4x ~cQ~ channels and fail because there are only 2 available, one for each instance of ~Q~. The reasoner needs to somehow convey the information that the first 2 ~cQ~ channels in the provenance tree refer to the *same* channel, whereas the other 2 ~cQ~ channels refer to a single other channel.
+
+ This is accomplished by tagging each channel in the provenance tree with an integer. If 2 leaves in the provenance tree have the same channel *and* same number, they refer to the same, single channel. If hey have the same channel name, but a different number, they refer to 2 separate instances of that channel. Note that the actual number used has no other significance and is merely linked to an internal proof counter.
+
+ In our example, the reasoner will report an input provenance ~(cQ:4 ⊕ cQ:4) ⊗ (cQ:7 ⊕ cQ:7)~ (or some other numbers instead of 4 and 7). This is how the graph engine that generated the image above knew how to connect one ~A~ and one ~B~ to the top ~Q~, corresponding to channel ~cQ:4~, and the other ~A~ and the other ~B~ to the second ~Q~, corresponding to channel ~cQ:7~.
+
+*** The ~#~ provenance 
+
+ In some cases, an input being connected does not feed to any (atomic) process, but belongs to a buffer that is introduced. Such an input will be forwarded to the output of the composite process without change. 
+
+ The reasoner reports the input provenance of such buffers using a hash ~#~ label for the leaf. 
+
+ In our [[https://github.com/PetrosPapapa/WorkflowFM-composer][current composer implementation]], we use a triangle "join" (or "terminator") node as a target to connect buffered resources to.
+
+*** The ~&~ prefix
+
+ The issue of [[#OutputMerge][merged options in output provenance]] needs to be dealt with in input provenance too. 
+
+ Let's revisit the same example:
+
+ {{< picture "provenance/SimplestMerge.png" "provenance/SimplestMerge.png" "Light blue diagram depicting an example of a simple merge of a process P with input X and optional output A or E and a process Q with input E and output A. The composite workflow shows P and Q connected with an edge labelled E and their outputs connected to a rhombus with the & symbol and a single output A." >}}
+
+ As we are joining ~P~ and ~Q~, the reasoner constructs an optional input ~A ⊕ E~ for ~Q~ using its existing input ~E~ and introducing a buffer of type ~A~. Once the new input is constructed, we need to provide its input provenance. This must be such that ~E~ gets connected to ~Q~, whereas ~A~ is connected to the merge node.
+
+ The reported input provenance is ~&_Step1 ⊕ cQ:5~, where ~_Step1~ the name of the composition, ~cQ~ the input channel of ~Q~, and ~5~ some integer.
+
+** Future Work
+
+ Further clarifying and simplifying the provenance information is an obvious want for the future.
+
+ A few particularities exist because of the violation of channel uniqueness, so solving this problem in a more general way will help simplify provenance too. 
+
+ Depending on further developments and needs of the frontend graph engine, we may extend provenance labels. The fact that the leaves can have any string as a label makes this structure very flexible and expandable.

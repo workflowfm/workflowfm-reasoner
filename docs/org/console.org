@@ -1,0 +1,555 @@
+#+TITLE: Console
+#+AUTHOR: Petros Papapanagiotou
+#+EMAIL: petros@workflowfm.com
+#+OPTIONS: toc:nil email:t 
+#+EXCLUDE_TAGS: noexport
+#+PROPERTY: header-args :session *OCaml* :exports both :eval no-export :results value :wrap SRC ocaml
+#+HUGO_AUTO_SET_LASTMOD: t
+
+#+HUGO_BASE_DIR: ../
+#+HUGO_SECTION: docs/console
+
+* Console
+  :PROPERTIES:
+  :EXPORT_FILE_NAME: _index
+  :EXPORT_HUGO_WEIGHT: 300
+  :END:
+
+This section covers the use of the reasoner through the console command interface running at the OCaml/HOL Light toplevel. This includes the available commands and responses.
+
+The JSON API mode can be loaded using the following command:
+#+BEGIN_SRC ocaml :eval no
+loads (!hol_dir ^ "/workflowfm/make.console.ml");;
+#+END_SRC 
+
+The entire interface is structured as the following module type:
+#+BEGIN_SRC ocaml :eval no
+module type Composer_console_type =
+    sig
+      module Composer : Composer_type
+
+      val responses : unit -> Composer.Response.t list
+
+      val add_process : Composer.Process.t -> Composer.Process.t
+      val get_process : string -> Composer.Process.t
+      val exists_process : string -> bool
+      val del_process : string -> unit
+      val reset_processes : unit -> unit
+      val list : unit -> string list
+
+      val add_intermediate : Composer.Process.t -> Composer.Process.t
+      val get_intermediate : string -> Composer.Process.t
+      val exists_intermediate : string -> bool
+      val del_intermediate : string -> unit
+      val reset_intermediates : unit -> unit
+      val ilist : unit -> string list
+
+      val get : string -> Composer.Process.t
+
+      val resetstep : unit -> unit
+      val reset : unit -> unit
+      val full_reset : unit -> unit
+
+      val create : string -> term list -> term -> Composer.Response.t
+      val compose1 : Action.t -> Composer.Response.t
+      val tensor : string -> string -> Composer.Response.t
+      val cwith : string -> string -> string -> string -> Composer.Response.t
+      val join : string -> string -> string -> string -> Composer.Response.t
+
+      val store : string -> string -> Composer.Response.t
+      val load : string -> unit
+    end ;;
+#+END_SRC
+
+Each of these functions/commands is explained in more detail in the next sections.
+
+* State
+  :PROPERTIES:
+  :EXPORT_FILE_NAME: state
+  :EXPORT_HUGO_WEIGHT: 310
+  :END:
+
+The console maintains an internal state of the introduced processes and compositions. This includes a list of atomic and stored processes and a separate list of intermediate processes. This allows the user to easily remove all intermediate processes when starting a new composition.
+
+** General
+   :PROPERTIES:
+   :CUSTOM_ID: general
+   :END:
+
+ The following commands are general purpose, spanning across the whole state:
+
+ | Command              | Result                                                                                                              |
+ |----------------------+---------------------------------------------------------------------------------------------------------------------|
+ | ~get "P"~            | Returns the process named "P", whether it is atomic, intermediate or stored.                                        |
+ | ~reset()~            | Resets intermediates and their [[#step][step counter]] in order to start a new composition.                                    |
+ | ~full_reset()~       | Resets the entire state in order to start a fresh session from scratch.                                             |
+ | ~load "P"~           | Assuming a process named "P" is stored, the intermediate processes resulting from its composition steps are loaded. |
+ | ~store "_Step4" "P"~ | Assuming an intermediate process named "_Step4" exists, it is stored as a new process named "P".                     |
+ | ~responses()~         | Yields the history of all responses given by the reasoner in the current session.                                   |
+
+ {{< tip warning >}}
+ Commands that delete processes, such as ~reset()~ and ~full_reset()~ cannot be undone!
+ {{< /tip >}}
+
+**** Notes:
+     - The ~load~ command performs a ~reset()~ first.
+
+** Processes
+
+The list of atomic and stored processes can be managed with the following commands:
+
+| Command              | Result                                        |
+|----------------------+-----------------------------------------------|
+| ~add_process p~      | Adds a new process to the list.               |
+| ~get_process "P"~    | Retrieves the process named "P" if it exists. |
+| ~exists_process "P"~ | Returns ~true~ if a process named "P" exists. |
+| ~del_process "P"~    | Deletes the process named "P" from the list.  |
+| ~reset_processes()~  | Resets the list by removing all processes.    |
+| ~list()~             | Returns a list of the names of all processes. |
+
+**** Notes:
+- It is easier to use [[#create][~create~]] rather than ~add_process~ so that the process specification is built automatically for you.
+- The commands ~del_process~ and ~reset_processes~ should be avoided or, at least, used carefully. There is a risk of reaching an inconsistent state where the components of a composition have been deleted.
+
+** Intermediates
+
+The list of intermediate compositions can be managed with the following commands:
+
+| Command                   | Result                                        |
+|---------------------------+-----------------------------------------------|
+| ~add_intermediate p~      | Adds a new intermediate process to the list.             |
+| ~get_intermediate "P"~    | Retrieves the intermediate process named "P" if it exists. |
+| ~exists_intermediate "P"~ | Returns ~true~ if an intermediate process named "P" exists. |
+| ~del_intermediate "P"~    | Deletes the intermediate process named "P" from the list. |
+| ~reset_intermediates()~   | Resets the list by removing all intermediate processes.   |
+| ~ilist()~                 | Returns a list of the names of all intermediate processes. |
+
+**** Notes:
+- It is easier to use the [[#commands][composition commands]] rather than ~add_intermediate~ so that the process specifications are built automatically for you and mistakes are prevented.
+- The command ~del_intermediate~ should be avoided or, at least, used carefully. There is a risk of reaching an inconsistent state where the components of a composition have been deleted.
+- The use of the [[#general][~reset~]] command is suggested instead of ~reset_intermediates~.
+
+** Step counter
+   :PROPERTIES:
+   :CUSTOM_ID: step
+   :END:
+
+Fresh names can be automatically produced for intermediate processes using the prefix ~"_Step"~ and a /step counter/.
+
+The command ~resetstep()~ can be used to reset the step counter. However, the use of the [[#general][~reset~]] command is suggested instead.
+
+* Commands
+  :PROPERTIES:
+  :CUSTOM_ID: commands
+  :EXPORT_FILE_NAME: commands
+  :EXPORT_HUGO_WEIGHT: 320
+  :END:
+
+  This section covers the main process specification and composition commands.
+  
+  It is worth noting that the result of these commands is of type ~Composer.Response~, which is [[https://github.com/workflowfm/workflowfm-reasoner/blob/master/src/api/composer.ml][defined as follows]]:
+
+  #+BEGIN_SRC ocaml :eval no
+    module Response :
+      sig
+        type t = 
+          | Ping of float
+          | Create of Process.t
+          | Compose of Process.t * Action.t * Actionstate.t
+          | Verify of Process.t
+          | Deploy of string * (string * string * bool) list 
+          | Failed of string
+          | Exception of string 
+        (*...*)
+      end
+  #+END_SRC
+
+  Upon failure a ~Failed~ or an ~Exception~ response will be issued with an associated message describing the failure. Otherwise, one of the other responses will be returned, as explained in the normal operation of each command below.
+
+** create
+   :PROPERTIES:
+   :CUSTOM_ID: create
+   :END:
+
+   The ~create~ command constructs a new atomic process given the types of its desired inputs and output. 
+
+   It takes 3 arguments:
+   1. ~string~: The name of the process.
+   2. ~term list~: The list of types of its inputs.
+   3. ~term~: The type of its output.
+
+   All terms are expected to be [[../../elements/resources/][resources]] involving HOL Light propositions and the operators ~++~ and ~**~ operators. No negative operators (~NEG~, ~&~, ~%~) should be used, including in the input types.
+   
+   The command returns a ~Create~ response with the specification of the created process.
+
+**** Notes
+
+   - Terms in HOL Light must be surrounded by back-ticks ~`~.
+   - If a process with the same name already exists, a warning will be shown and the old process will be replaced.
+   - All the elements of the process other than its name and its types, including channel names, \pi-calculus specification, and provenance are constructed automatically.
+
+**** Example
+
+     The following invocation of ~create~ constructs a process named ~"P"~ with two inputs of types ~X~ and ~Y++Z~ respectively and an output of type ~A**B**C~:
+
+#+BEGIN_SRC ocaml 
+create "P" [`X`; `Y ++ Z`] `A ** B ** C`;;
+#+END_SRC
+
+#+RESULTS:
+#+begin_SRC ocaml
+Console.Composer.Response.Create
+   {Console.Composer.Process.name = "P";
+    inputs = [(`X`, `cP_X_1`); (`Y ++ Z`, `cP_lB_Y_Plus_Z_rB_2`)];
+    output = (`A ** B ** C`, `oP_lB_A_x_lB_B_x_C_rB_rB_`);
+    prov =
+     Provnode ("times", Provleaf "P",
+      Provnode ("times", Provleaf "P", Provleaf "P"));
+    proc =
+     `P (cP_X_1,cP_lB_Y_Plus_Z_rB_2,oP_lB_A_x_lB_B_x_C_rB_rB_) =
+      Comp (In cP_X_1 [cP_X_1__a_X] Zero)
+      (Comp
+       (Res [cP_lB_Y_Plus_Z_rB_2__opt_Y; cP_lB_Y_Plus_Z_rB_2__opt_Z]
+       (Out cP_lB_Y_Plus_Z_rB_2
+        [cP_lB_Y_Plus_Z_rB_2__opt_Y; cP_lB_Y_Plus_Z_rB_2__opt_Z]
+       (Plus
+        (In cP_lB_Y_Plus_Z_rB_2__opt_Y [cP_lB_Y_Plus_Z_rB_2_Y]
+        (In cP_lB_Y_Plus_Z_rB_2_Y [cP_lB_Y_Plus_Z_rB_2_l_a_Y] Zero))
+       (In cP_lB_Y_Plus_Z_rB_2__opt_Z [cP_lB_Y_Plus_Z_rB_2_Z]
+       (In cP_lB_Y_Plus_Z_rB_2_Z [cP_lB_Y_Plus_Z_rB_2_r_a_Z] Zero)))))
+      (Res
+       [oP_lB_A_x_lB_B_x_C_rB_rB__A; oP_lB_A_x_lB_B_x_C_rB_rB__lB_B_x_C_rB]
+      (Out oP_lB_A_x_lB_B_x_C_rB_rB_
+       [oP_lB_A_x_lB_B_x_C_rB_rB__A; oP_lB_A_x_lB_B_x_C_rB_rB__lB_B_x_C_rB]
+      (Comp
+       (Res [oP_lB_A_x_lB_B_x_C_rB_rB__l_a_A]
+       (Out oP_lB_A_x_lB_B_x_C_rB_rB__A [oP_lB_A_x_lB_B_x_C_rB_rB__l_a_A]
+       Zero))
+      (Res [oP_lB_A_x_lB_B_x_C_rB_rB__rB; oP_lB_A_x_lB_B_x_C_rB_rB__rC]
+      (Out oP_lB_A_x_lB_B_x_C_rB_rB__lB_B_x_C_rB
+       [oP_lB_A_x_lB_B_x_C_rB_rB__rB; oP_lB_A_x_lB_B_x_C_rB_rB__rC]
+      (Comp
+       (Res [oP_lB_A_x_lB_B_x_C_rB_rB__rl_a_B]
+       (Out oP_lB_A_x_lB_B_x_C_rB_rB__rB [oP_lB_A_x_lB_B_x_C_rB_rB__rl_a_B]
+       Zero))
+      (Res [oP_lB_A_x_lB_B_x_C_rB_rB__rr_a_C]
+      (Out oP_lB_A_x_lB_B_x_C_rB_rB__rC [oP_lB_A_x_lB_B_x_C_rB_rB__rr_a_C]
+      Zero)))))))))`;
+    actions = []; copier = false; intermediate = false}
+#+end_SRC
+
+** tensor
+   :PROPERTIES:
+   :CUSTOM_ID: tensor
+   :END:
+   
+   The ~tensor~ command composes two processes in parallel with the [[../../elements/composition/#tensor][~TENSOR~ action]].
+
+   It takes 2 arguments:
+   1. ~string~: The name of the first process to compose.
+   2. ~string~: The name of the second process to compose.
+   
+   The command returns a ~Compose~ response with the specification of the created intermediate composition, the composition action that was applied, and the [[../../elements/composition/#actionstate][resulting actionstate]] with additional metadata.
+
+**** Notes
+
+   - The name of the resulting intermediate composition is automatically determined using the ~"_Step"~ prefix and an internal [[#step][step counter]].
+
+**** Reset :noexport:
+
+     #+BEGIN_SRC ocaml :export no :results silent
+     full_reset();;
+     #+END_SRC
+
+**** Example
+
+     The following invocation of ~tensor~ performs the parallel composition ~_Step0~ of a process ~P~ with input ~X~ and output ~A ++ B~ and a process ~Q~ with inputs ~Y~ and ~Z~ and output ~C~:
+
+#+BEGIN_SRC ocaml 
+  create "P" [`X`] `A ++ B` ;;
+  create "Q" [`Y`; `Z`] `C` ;;
+  tensor "P" "Q" ;;
+#+END_SRC
+
+#+RESULTS:
+#+begin_SRC ocaml
+  Console.Composer.Response.Compose
+   ({Console.Composer.Process.name = "_Step0";
+     inputs = [(`X`, `cP_X_1`); (`Y`, `cQ_Y_1`); (`Z`, `cQ_Z_2`)];
+     output = (`(A ++ B) ** C`, `c_Step0___Step0__z1`);
+     prov =
+      Provnode ("times", Provnode ("plus", Provleaf "P", Provleaf "P"),
+       Provleaf "Q");
+     proc =
+      `_Step0 (cP_X_1,cQ_Y_1,cQ_Z_2,c_Step0___Step0__z1) =
+       PiTimesProc (A ++ B) C c_Step0___Step0__z1 oP_lB_A_Plus_B_rB_ oQ_C_
+       (P (cP_X_1,oP_lB_A_Plus_B_rB_))
+       (Q (cQ_Y_1,cQ_Z_2,oQ_C_))`;
+     actions =
+      [{Action.act = "TENSOR"; larg = "P"; lsel = ""; rarg = "Q"; rsel = "";
+        res = "_Step0"}];
+     copier = false; intermediate = true},
+   {Action.act = "TENSOR"; larg = "P"; lsel = ""; rarg = "Q"; rsel = "";
+    res = "_Step0"},
+   {Actionstate.label = "_Step0"; ctr = 0;
+    metas =
+     [`c_Step0___Step0__z1`; `c_Step0___Step0__y1`; `c_Step0___Step0__Q1`;
+      `cQ_Y_1`; `cQ_Z_2`; `oQ_C_`; `cP_X_1`; `oP_lB_A_Plus_B_rB_`];
+    merged = []; iprov = [];
+    prov =
+     [("_Step0",
+       Provnode ("times", Provnode ("plus", Provleaf "P", Provleaf "P"),
+        Provleaf "Q"));
+      ("P", Provnode ("plus", Provleaf "P", Provleaf "P"));
+      ("Q", Provleaf "Q")]})
+#+end_SRC
+
+** cwith
+   :PROPERTIES:
+   :CUSTOM_ID: with
+   :END:
+   
+   The ~cwith~ command composes two processes conditionally with the [[../../elements/composition/#with][~WITH~ action]].
+
+   It takes 4 arguments:
+   1. ~string~: The name of the first process to compose.
+   2. ~string~: The type of the input to use from the first process.
+   3. ~string~: The name of the second process to compose.
+   4. ~string~: The type of the input to use from the second process.
+   
+   The command returns a ~Compose~ response with the specification of the created intermediate composition, the composition action that was applied, and the [[../../elements/composition/#actionstate][resulting actionstate]] with additional metadata.
+
+**** Notes
+
+   - The name of the resulting intermediate composition is automatically determined using the ~"_Step"~ prefix and an internal [[#step][step counter]].
+   - The types of the selected inputs need to be provided as *strings* and not as terms.
+
+**** Reset :noexport:
+
+     #+BEGIN_SRC ocaml :export no :results silent
+     full_reset();;
+     #+END_SRC
+
+**** Example
+
+     The following invocation of ~cwith~ performs the conditional composition ~_Step0~ of a process ~P~ with input ~X~ and output ~A ++ B~ and a process ~Q~ with inputs ~Y~ and ~Z~ and output ~C~ with inputs ~X~ and ~Y~ selected:
+
+#+BEGIN_SRC ocaml 
+  create "P" [`X`] `A ++ B` ;;
+  create "Q" [`Y`; `Z`] `C` ;;
+  cwith "P" "X" "Q" "Y" ;;
+#+END_SRC
+
+#+RESULTS:
+#+begin_SRC ocaml
+  Console.Composer.Response.Compose
+   ({Console.Composer.Process.name = "_Step0";
+     inputs = [(`Z`, `cQ_Z_2`); (`X ++ Y`, `c_Step0___Step0__x3`)];
+     output = (`((A ++ B) ** Z) ++ C`, `c_Step0___Step0__y3`);
+     prov =
+      Provnode ("plus",
+       Provnode ("times",
+        Provnode ("plus", Provleaf "&_Step0", Provleaf "&_Step0"),
+        Provleaf "&_Step0"),
+       Provleaf "&_Step0");
+     proc =
+      `_Step0 (cQ_Z_2,c_Step0___Step0__x3,c_Step0___Step0__y3) =
+       PiWithProc (NEG X) (NEG Y) c_Step0___Step0__x3 cP_X_1 cQ_Y_1
+       c_Step0___Step0__uI3
+       c_Step0___Step0__vI3
+       (PiPlusLProc ((A ++ B) ** Z) C c_Step0___Step0__y3 c_Step0___Step0__z1
+        c_Step0___Step0__uR3
+        c_Step0___Step0__vR3
+       (PiTimesProc (A ++ B) Z c_Step0___Step0__z1 oP_lB_A_Plus_B_rB_
+        c_Step0___Step0__y1
+        (P (cP_X_1,oP_lB_A_Plus_B_rB_))
+       (PiIdProc Z cQ_Z_2 c_Step0___Step0__y1 c_Step0___Step0__m2)))
+       (PiPlusRProc ((A ++ B) ** Z) C c_Step0___Step0__y3 oQ_C_
+        c_Step0___Step0__uE3
+        c_Step0___Step0__vE3
+       (Q (cQ_Y_1,cQ_Z_2,oQ_C_)))`;
+     actions =
+      [{Action.act = "WITH"; larg = "P"; lsel = "X"; rarg = "Q"; rsel = "Y";
+        res = "_Step0"}];
+     copier = false; intermediate = true},
+   {Action.act = "WITH"; larg = "P"; lsel = "X"; rarg = "Q"; rsel = "Y";
+    res = "_Step0"},
+   {Actionstate.label = "_Step0"; ctr = 0;
+    metas =
+     [`c_Step0___Step0__x3`; `c_Step0___Step0__uI3`; `c_Step0___Step0__vI3`;
+      `c_Step0___Step0__uR3`; `c_Step0___Step0__vR3`; `c_Step0___Step0__y3`;
+      `c_Step0___Step0__d3`; `c_Step0___Step0__uE3`; `c_Step0___Step0__vE3`;
+      `c_Step0___Step0__Q3`; `c_Step0___Step0__m2`; `c_Step0___Step0__z1`;
+      `c_Step0___Step0__y1`; `c_Step0___Step0__Q1`; `cQ_Y_1`; `cQ_Z_2`;
+      `oQ_C_`; `cP_X_1`; `oP_lB_A_Plus_B_rB_`];
+    merged = [(`NEG (X ++ Y) <> c_Step0___Step0__x3`, "cP_X_1", "cQ_Y_1")];
+    iprov = [];
+    prov =
+     [("_Step0",
+       Provnode ("plus",
+        Provnode ("times",
+         Provnode ("plus", Provleaf "&_Step0", Provleaf "&_Step0"),
+         Provleaf "&_Step0"),
+        Provleaf "&_Step0"));
+      ("P", Provnode ("plus", Provleaf "P", Provleaf "P"));
+      ("Q", Provleaf "Q")]})
+#+end_SRC
+** join
+   :PROPERTIES:
+   :CUSTOM_ID: join
+   :END:
+   
+   The ~join~ command composes two processes in sequence with the [[../../elements/composition/#join][~JOIN~ action]].
+
+   It takes 4 arguments:
+   1. ~string~: The name of the first process to compose.
+   2. ~string~: The path to a sub-term of the output of the first process.
+   3. ~string~: The name of the second process to compose.
+   4. ~string~: The type of the input to use from the second process.
+   
+   The command returns a ~Compose~ response with the specification of the created intermediate composition, the composition action that was applied, and the [[../../elements/composition/#actionstate][resulting actionstate]] with additional metadata.
+
+**** Notes
+
+   - The name of the resulting intermediate composition is automatically determined using the ~"_Step"~ prefix and an internal [[#step][step counter]].
+   - The path to a sub-type of the output of the first process must follow the syntax of [[https://www.cl.cam.ac.uk/~jrh13/hol-light/HTML/find_path.html][HOL Light's ~find_path~ function]]. 
+   - The types of the selected input need to be provided as a *string* and not as a term.
+
+**** Reset :noexport:
+
+     #+BEGIN_SRC ocaml :export no :results silent
+     full_reset();;
+     #+END_SRC
+
+**** Example
+
+     The following invocation of ~join~ performs the sequential composition ~_Step0~ of a process ~P~ with input ~X~ and output ~A ++ B~ and a process ~Q~ with inputs ~A~ and ~Y~ and output ~C~:
+
+#+BEGIN_SRC ocaml 
+  create "P" [`X`] `A ++ B` ;;
+  create "Q" [`A`; `Z`] `C` ;;
+  join "P" "lr" "Q" "A" ;;
+#+END_SRC
+
+#+RESULTS:
+#+begin_SRC ocaml
+  Console.Composer.Response.Compose
+   ({Console.Composer.Process.name = "_Step0";
+     inputs = [(`X`, `cP_X_1`); (`Z`, `cQ_Z_2`)];
+     output = (`C ++ (Z ** B)`, `c_Step0___Step0__y3`);
+     prov =
+      Provnode ("plus", Provleaf "Q",
+       Provnode ("times", Provleaf "Q:cQ_Z_2", Provleaf "P"));
+     proc =
+      `_Step0 (cP_X_1,cQ_Z_2,c_Step0___Step0__y3) =
+       PiCutProc (A ++ B) c_Step0___Step0__z7 c_Step0___Step0__x3
+       oP_lB_A_Plus_B_rB_
+       (PiWithProc (NEG A) (NEG B) c_Step0___Step0__x3 cQ_A_1
+        c_Step0___Step0__c3
+        c_Step0___Step0__uI3
+        c_Step0___Step0__vI3
+        (PiPlusLProc C (Z ** B) c_Step0___Step0__y3 oQ_C_
+         c_Step0___Step0__uR3
+         c_Step0___Step0__vR3
+        (Q (cQ_A_1,cQ_Z_2,oQ_C_)))
+       (PiPlusRProc C (Z ** B) c_Step0___Step0__y3 c_Step0___Step0__d3
+        c_Step0___Step0__uE3
+        c_Step0___Step0__vE3
+       (PiTimesProc Z B c_Step0___Step0__d3 c_Step0___Step0__x4
+        c_Step0___Step0__y4
+        (PiIdProc Z cQ_Z_2 c_Step0___Step0__x4 c_Step0___Step0__m5)
+       (PiIdProc B c_Step0___Step0__c3 c_Step0___Step0__y4
+       c_Step0___Step0__m6))))
+       (P (cP_X_1,oP_lB_A_Plus_B_rB_))`;
+     actions =
+      [{Action.act = "JOIN"; larg = "P"; lsel = "lr"; rarg = "Q"; rsel = "A";
+        res = "_Step0"}];
+     copier = false; intermediate = true},
+   {Action.act = "JOIN"; larg = "P"; lsel = "lr"; rarg = "Q"; rsel = "A";
+    res = "_Step0"},
+   {Actionstate.label = "_Step0"; ctr = 0;
+    metas =
+     [`c_Step0___Step0__z7`; `c_Step0___Step0__y7`; `c_Step0___Step0__Q7`;
+      `c_Step0___Step0__m6`; `c_Step0___Step0__m5`; `c_Step0___Step0__x4`;
+      `c_Step0___Step0__y4`; `c_Step0___Step0__P4`; `c_Step0___Step0__Q4`;
+      `c_Step0___Step0__x3`; `c_Step0___Step0__c3`; `c_Step0___Step0__uI3`;
+      `c_Step0___Step0__vI3`; `c_Step0___Step0__uR3`; `c_Step0___Step0__vR3`;
+      `c_Step0___Step0__y3`; `c_Step0___Step0__d3`; `c_Step0___Step0__uE3`;
+      `c_Step0___Step0__vE3`; `c_Step0___Step0__Q3`; `cQ_A_1`; `cQ_Z_2`;
+      `oQ_C_`; `cP_X_1`; `oP_lB_A_Plus_B_rB_`];
+    merged = [];
+    iprov =
+     [(`A ++ B`, Provnode ("plus", Provleaf "cQ_A_1:1", Provleaf "#"))];
+    prov =
+     [("Q", Provleaf "Q");
+      ("_Step0",
+       Provnode ("plus", Provleaf "Q",
+        Provnode ("times", Provleaf "Q:cQ_Z_2", Provleaf "P")));
+      ("P", Provnode ("plus", Provleaf "P", Provleaf "P"))]})
+#+end_SRC
+** compose1
+   :PROPERTIES:
+   :CUSTOM_ID: compose1
+   :END:
+
+   The ~compose1~ command composes two processes with an explicit [[../../elements/composition/#actions][composition action]].
+
+   It takes 1 argument:
+   1. ~Action.t~: The composition action to perform.
+
+   This command is intended for advanced usage, for instance with a custom action, or some other action parameter not handled by the other commands.
+   
+   The command returns a ~Compose~ response with the specification of the created intermediate composition, the composition action that was applied, and the [[../../elements/composition/#actionstate][resulting actionstate]] with additional metadata.
+
+**** Notes
+
+   - If an intermediate composition with the same name as the action's result already exists, a warning will be shown and the old process will be replaced.
+
+**** Reset :noexport:
+
+     #+BEGIN_SRC ocaml :export no :results silent
+     full_reset();;
+     #+END_SRC
+
+**** Example
+
+     The following invocation of ~compose1~ performs the parallel composition ~R~ of a process ~P~ with input ~X~ and output ~A ++ B~ and a process ~Q~ with inputs ~Y~ and ~Z~ and output ~C~:
+
+#+BEGIN_SRC ocaml 
+  create "P" [`X`] `A ++ B` ;;
+  create "Q" [`Y`; `Z`] `C` ;;
+  compose1 {Action.act = "TENSOR"; larg = "P"; lsel = ""; rarg = "Q"; rsel = ""; res = "R"} ;;
+#+END_SRC
+
+#+RESULTS:
+#+begin_SRC ocaml
+  Console.Composer.Response.Compose
+   ({Console.Composer.Process.name = "R";
+     inputs = [(`X`, `cP_X_1`); (`Y`, `cQ_Y_1`); (`Z`, `cQ_Z_2`)];
+     output = (`(A ++ B) ** C`, `cR__R__z1`);
+     prov =
+      Provnode ("times", Provnode ("plus", Provleaf "P", Provleaf "P"),
+       Provleaf "Q");
+     proc =
+      `R (cP_X_1,cQ_Y_1,cQ_Z_2,cR__R__z1) =
+       PiTimesProc (A ++ B) C cR__R__z1 oP_lB_A_Plus_B_rB_ oQ_C_
+       (P (cP_X_1,oP_lB_A_Plus_B_rB_))
+       (Q (cQ_Y_1,cQ_Z_2,oQ_C_))`;
+     actions =
+      [{Action.act = "TENSOR"; larg = "P"; lsel = ""; rarg = "Q"; rsel = "";
+        res = "R"}];
+     copier = false; intermediate = true},
+   {Action.act = "TENSOR"; larg = "P"; lsel = ""; rarg = "Q"; rsel = "";
+    res = "R"},
+   {Actionstate.label = "R"; ctr = 0;
+    metas =
+     [`cR__R__z1`; `cR__R__y1`; `cR__R__Q1`; `cQ_Y_1`; `cQ_Z_2`; `oQ_C_`;
+      `cP_X_1`; `oP_lB_A_Plus_B_rB_`];
+    merged = []; iprov = [];
+    prov =
+     [("R",
+       Provnode ("times", Provnode ("plus", Provleaf "P", Provleaf "P"),
+        Provleaf "Q"));
+      ("P", Provnode ("plus", Provleaf "P", Provleaf "P"));
+      ("Q", Provleaf "Q")]})
+#+end_SRC

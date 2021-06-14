@@ -1,7 +1,7 @@
 ---
 title: "Commands"
 author: ["Petros Papapanagiotou"]
-lastmod: 2021-06-07T15:16:56+01:00
+lastmod: 2021-06-14T23:26:20+01:00
 draft: false
 weight: 420
 ---
@@ -27,11 +27,13 @@ All commands include a `command` field of type `string` which defines the type o
 
 ## Ping {#PingCommand}
 
-**Description**:
+
+#### Description: {#description}
 
 Ping/keep-alive command. Gives a [`Pong`]({{< relref "responses#PongResponse" >}}) response.
 
-**Structure**:
+
+#### Structure: {#structure}
 
 -   `command`: `string` = `"ping"`
 -   `ping`: `float` = a timestamp to measure ping
@@ -39,11 +41,13 @@ Ping/keep-alive command. Gives a [`Pong`]({{< relref "responses#PongResponse" >}
 
 ## Create {#CreateCommand}
 
-**Description**:
+
+#### Description: {#description}
 
 A command to create a new atomic process.
 
-**Structure**:
+
+#### Structure: {#structure}
 
 -   `command`: `string` = `"create"`
 -   `name`: `string` = the name of the process to be created
@@ -53,13 +57,15 @@ A command to create a new atomic process.
 
 ## Binary compose (compose1) {#Compose1Command}
 
-**Description**:
+
+#### Description: {#description}
 
 Binary composition of 2 processes with a single action.
 
 Although a more general [composition command](#ComposeCommand) is provided, when it comes to simple binary compositions this command executes faster.
 
-**Structure**:
+
+#### Structure: {#structure}
 
 -   `command`: `string` = `"compose1"`
 -   `action`: [`action`]({{< relref "types#action" >}}) = the composition action to be performed. The labels of the 2 arguments must match the labels of the processes provided in the next fields.
@@ -69,11 +75,13 @@ Although a more general [composition command](#ComposeCommand) is provided, when
 
 ## Compose {#ComposeCommand}
 
-**Description**:
+
+#### Description: {#description}
 
 Construction of a complex composition with one or more actions. Although more general than the binary composition command [`compose1`](#Compose1Command), it is slower.
 
-**Structure**:
+
+#### Structure: {#structure}
 
 -   `command`: `string` = `"compose"`
 -   `name`: `string` = the name of the final composition
@@ -83,13 +91,15 @@ Construction of a complex composition with one or more actions. Although more ge
 
 ## Verify {#VerifyCommand}
 
-**Description**:
+
+#### Description: {#description}
 
 A command used to reconstruct a process composition.
 
 This is legacy command which has now devolved into the [`compose`](#ComposeCommand) command. The only difference is that `verify` does not produce [`compose`]({{< relref "responses#ComposeResponse" >}}) responses for intermediate steps. It will only generate one [`verify`]({{< relref "responses#VerifyResponse" >}}) response for the final process.
 
-**Structure**:
+
+#### Structure: {#structure}
 
 -   `command`: `string` = `"verify"`
 -   `name`: `string` = the name of the final composition
@@ -99,7 +109,8 @@ This is legacy command which has now devolved into the [`compose`](#ComposeComma
 
 ## Deploy {#DeployCommand}
 
-**Description**:
+
+#### Description: {#description}
 
 This is a family of commands that produce executable process deployments.
 
@@ -109,7 +120,8 @@ There are currently 3 types of possible deployments:
 2.  `PiLib`: This produces a deployment and code templates using the old PiLib library.
 3.  `PEW`: This produces a deployment and code templates with the newer [PEW library](https://github.com/workflowfm/pew).
 
-**Structure**:
+
+#### Structure: {#structure}
 
 
 #### `PiViz` {#piviz}
