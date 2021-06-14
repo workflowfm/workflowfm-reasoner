@@ -17,6 +17,11 @@
 
 This section covers the use of the reasoner through the console command interface running at the OCaml/HOL Light toplevel. This includes the available commands and responses.
 
+The JSON API mode can be loaded using the following command:
+#+BEGIN_SRC ocaml :eval no
+loads (!hol_dir ^ "/workflowfm/make.console.ml");;
+#+END_SRC 
+
 The entire interface is structured as the following module type:
 #+BEGIN_SRC ocaml :eval no
 module type Composer_console_type =

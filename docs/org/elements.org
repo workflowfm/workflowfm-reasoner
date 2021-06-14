@@ -173,7 +173,9 @@ This allows us to reconstruct or revalidate these composite processes at any poi
 Atomic processes have an empty list of actions.
 
 ** Copy Nodes
-
+:PROPERTIES:
+:CUSTOM_ID: copynodes
+:END:
 Copier processes or /Copy Nodes/ are processes that represent the ability of a particular resource, such as an electronic document, to be copied. 
 
 We do not include exponentials in our linear logic formalisation, so this mechanism enables us to copy resources in an explicit way. If it is not actually possible to copy a resource (e.g. a physical resource or currency), then it will not be possible to provide a concrete implementation of the specification of the copier process.
