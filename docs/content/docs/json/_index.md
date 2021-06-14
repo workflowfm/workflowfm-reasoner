@@ -1,7 +1,7 @@
 ---
 title: "JSON API"
 author: ["Petros Papapanagiotou"]
-lastmod: 2021-06-07T15:16:55+01:00
+lastmod: 2021-06-14T23:26:16+01:00
 draft: false
 weight: 400
 ---

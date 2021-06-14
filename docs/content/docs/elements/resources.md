@@ -1,7 +1,7 @@
 ---
 title: "Resources"
 author: ["Petros Papapanagiotou"]
-lastmod: 2021-06-08T00:15:38+01:00
+lastmod: 2021-06-14T23:25:43+01:00
 draft: false
 weight: 210
 ---
@@ -11,7 +11,11 @@ Processes are specified based on their input and output resources. Each resource
 
 ## Resource types {#resource-types}
 
-Resource types are specified by a proposition in linear logic. In HOL Light these are propositions of type `` `:LinProp` ``.
+Resource types are specified by a proposition in linear logic. [In HOL Light](https://github.com/workflowfm/workflowfm-reasoner/blob/master/src/CLL/CLL.ml) these are propositions of type `` `:LinProp` ``.
+
+{{< tip >}}
+Resource type names need to follow the same naming restrictions as HOL Light variables, i.e. they need to start with a letter and contain only letters and numbers.
+{{< /tip >}}
 
 Resource types can be composed using the following logical connectives:
 
@@ -24,7 +28,7 @@ Different combinations of these operators can be used to express composite resou
 
 Typically, composite resource types involving these 2 operators represent **output** resources. In contrast, **input** resources are expressed as the _negation_ of output resources, using the operator `NEG`.
 
-For exmaple, this means the type `` `NEG (A ** B)` `` represents two parallel _input_ resources.
+For example, this means the type `` `NEG (A ** B)` `` represents two parallel _input_ resources.
 
 Negated duals of the &otimes; and &oplus; operators do exist and are as follows:
 
@@ -46,6 +50,10 @@ This means that, for process specification and composition, you are expected to 
 
 The reasoner often allows you to not even use `NEG` when a resource type is unambiguously expected to be an input.
 
+{{< tip >}}
+All binary operators are right-associative. For example: `A ** B ** C = A ** (B ** C)`.
+{{< /tip >}}
+
 
 ## Channels {#channels}
 
@@ -61,6 +69,6 @@ At the logic level, the corresponding type of a _term_ in HOL Light is `` `:(num
 
 Note the use of numbers (`num`) in that type. This represents the type of channels, which in principle could be any desired HOL Light type. Numbers make many reasoning tasks easier, though for the most part in practice we work with named variables for channels.
 
-Resource annotation is accomplished in the logic with the HOL Light operator `<>`.
+Resource annotation is accomplished [in the logic](https://github.com/workflowfm/workflowfm-reasoner/blob/master/src/CLL/CLL.ml) with the HOL Light operator `<>`.
 
 For example, the term `` `(A ** B) <> c` `` represents a channel `c` carrying an _output_ resource of type `A ** B` or, more specifically, _two_ output resources of type s `A` and `B` respectively in parallel.

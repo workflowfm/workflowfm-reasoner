@@ -1,7 +1,7 @@
 ---
 title: "Install HOL Light"
 author: ["Petros Papapanagiotou"]
-lastmod: 2021-06-08T00:15:34+01:00
+lastmod: 2021-06-14T23:25:26+01:00
 draft: false
 weight: 120
 ---
